@@ -5,7 +5,18 @@
 
 執行
 ===================
-java -jar -D192.168.x.y out/artifacts/impinjCtrl_jar/impinjCtrl
+java -D192.168.x.y -jar out/artifacts/impinjCtrl_jar/impinjCtrl
+
+其他選填選項：
+-DpowerDbm=1.0  設定天線功率
+-DsensitivityDbm=-100   設定天線靈敏度
+-DdebugMode=0   開/關debug模式（report包含天線強度等資訊）
+
+指令
+===================
+連上Reader之後，直接輸入下列指令：
+STOP    結束連線
+STATUS  回傳Reader狀態
 
 結束
 ===================
