@@ -28,7 +28,8 @@ public class ReaderSettings {
     public String RxSensitivityAntenna1;
     public String txPowerAntenna1;
 
-    public static void setSettings (ImpinjReader reader, Settings settings) throws OctaneSdkException {
+    public static Settings getSettings (ImpinjReader reader) throws OctaneSdkException {
+        Settings settings = reader.queryDefaultSettings();
         String sensitivityDbm = System.getProperty(Properties.sensitivityDbm);
         String powerDbm = System.getProperty(Properties.powerDbm);
         String debugMode = System.getProperty(Properties.debugMode);
@@ -36,7 +37,7 @@ public class ReaderSettings {
         ReportConfig report = settings.getReport();
         report.setIncludeFirstSeenTime(true);
         report.setMode(ReportMode.Individual);
-        if (debugMode.equals("1")) {
+        if (debugMode != null && debugMode.equals("1")) {
             report.setIncludeAntennaPortNumber(true);
             report.setIncludeChannel(true);
             report.setIncludeCrc(true);
@@ -78,9 +79,9 @@ public class ReaderSettings {
         } else {
             antennas.getAntenna((short) 1).setTxPowerinDbm(Float.parseFloat(powerDbm)); //20.0
         }
-        reader.applySettings(settings);
+        return settings;
     }
-    public static void getSettings (ImpinjReader reader, Settings settings) throws OctaneSdkException {
+    public static void getReaderInfo (ImpinjReader reader, Settings settings) throws OctaneSdkException {
 
         ReaderSettings result = new ReaderSettings();
         Gson gson = new Gson();

@@ -7,6 +7,7 @@ import java.util.Scanner;
 
 public class ReadTags {
     public static void main(String[] args) {
+
         try {
             String hostname = System.getProperty(Properties.hostname);
 
@@ -20,9 +21,11 @@ public class ReadTags {
             System.out.println("Connecting...");
             reader.connect(hostname);
 
-            Settings settings = reader.queryDefaultSettings();
-            ReaderSettings.setSettings(reader, settings);
+            Settings settings = ReaderSettings.getSettings(reader);
+
             reader.setTagReportListener(new ReportFormat());
+            reader.applySettings(settings);
+
             reader.start();
 
             System.out.println("Starting reader");
@@ -38,7 +41,7 @@ public class ReadTags {
                 if (line.equals("STOP")) {
                     break;
                 } else if (line.equals("STATUS")) {
-                    ReaderSettings.getSettings(reader, settings);
+                    ReaderSettings.getReaderInfo(reader, settings);
                 }
             }
             System.out.println("Disconnecting.");
