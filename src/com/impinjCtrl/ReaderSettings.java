@@ -1,9 +1,17 @@
 package com.impinjCtrl;
 
-
 import com.google.gson.Gson;
-import com.impinj.octane.*;
-
+import com.impinj.octane.AntennaConfigGroup;
+import com.impinj.octane.AntennaConfig;
+import com.impinj.octane.FeatureSet;
+import com.impinj.octane.ImpinjReader;
+import com.impinj.octane.OctaneSdkException;
+import com.impinj.octane.ReaderMode;
+import com.impinj.octane.ReportConfig;
+import com.impinj.octane.ReportMode;
+import com.impinj.octane.SearchMode;
+import com.impinj.octane.Settings;
+import com.impinj.octane.Status;
 import java.util.ArrayList;
 
 public class ReaderSettings {

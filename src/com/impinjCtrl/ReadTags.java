@@ -1,8 +1,8 @@
 package com.impinjCtrl;
 
-import com.impinj.octane.*;
-import com.google.gson.Gson;
-import java.util.ArrayList;
+import com.impinj.octane.ImpinjReader;
+import com.impinj.octane.Settings;
+import com.impinj.octane.OctaneSdkException;
 import java.util.Scanner;
 
 public class ReadTags {
