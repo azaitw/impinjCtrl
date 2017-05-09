@@ -10,6 +10,7 @@ public class ReadTags {
             String hostname = System.getProperty(Properties.hostname);
             String sensitivityDbm = System.getProperty(Properties.sensitivityDbm);
             String powerDbm = System.getProperty(Properties.powerDbm);
+            String debugMode = System.getProperty(Properties.debugMode);
 
             if (hostname == null) {
                 throw new Exception("Must specify the '"
@@ -22,22 +23,23 @@ public class ReadTags {
             reader.connect(hostname);
 
             Settings settings = reader.queryDefaultSettings();
-
             ReportConfig report = settings.getReport();
-            report.setIncludeAntennaPortNumber(true);
-            report.setIncludeChannel(true);
-            //report.setIncludeCrc(true);
-            //report.setIncludeDopplerFrequency(true);
-            //report.setIncludeFastId(true)
-            //report.setIncludeGpsCoordinates(true);
             report.setIncludeFirstSeenTime(true);
+            report.setMode(ReportMode.Individual);
+            if (debugMode.equals("1")) {
+                report.setIncludeAntennaPortNumber(true);
+                report.setIncludeChannel(true);
+                report.setIncludeCrc(true);
+                report.setIncludeDopplerFrequency(true);
+                report.setIncludePeakRssi(true);
+                report.setIncludePhaseAngle(true);
+            }
+            //report.setIncludeFastId(true);
+            //report.setIncludeGpsCoordinates(true);
             //report.setIncludeLastSeenTime(true);
             //report.setIncludePcBits(true);
-
-            //report.setIncludePeakRssi(true);
-            //report.setIncludePhaseAngle(true);
             //report.setIncludeSeenCount(true);
-            report.setMode(ReportMode.Individual);
+
 
             // The reader can be set into various modes in which reader
             // dynamics are optimized for specific regions and environments.
@@ -45,21 +47,23 @@ public class ReadTags {
             // and continuously optimizes the reader’s configuration
             settings.setReaderMode(ReaderMode.AutoSetDenseReader);
 
+
             // set some special settings for antenna 1
             AntennaConfigGroup antennas = settings.getAntennas();
             antennas.disableAll();
             antennas.enableById(new short[]{1});
 
 
+            // Define reader range
             if (sensitivityDbm == null) {
                 antennas.getAntenna((short) 1).setIsMaxRxSensitivity(true);
             } else {
                 antennas.getAntenna((short) 1).setRxSensitivityinDbm(Float.parseFloat(sensitivityDbm)); // -70
             }
             if (powerDbm == null) {
-                antennas.getAntenna((short) 1).setTxPowerinDbm(Float.parseFloat(powerDbm)); //20.0
-            } else {
                 antennas.getAntenna((short) 1).setIsMaxTxPower(true);
+            } else {
+                antennas.getAntenna((short) 1).setTxPowerinDbm(Float.parseFloat(powerDbm)); //20.0
             }
             reader.setTagReportListener(new ReportFormat());
 
