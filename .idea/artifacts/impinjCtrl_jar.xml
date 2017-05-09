@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="impinjCtrl:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/impinjCtrl_jar</output-path>
+    <root id="archive" name="impinjCtrl.jar">
+      <element id="module-output" name="impinjCtrl" />
+      <element id="library" level="project" name="OctaneSDKJava-1.26.2.0-jar-with-dependencies" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/OctaneSDKJava-1.26.2.0-jar-with-dependencies.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
