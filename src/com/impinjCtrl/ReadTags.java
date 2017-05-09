@@ -53,6 +53,11 @@ public class ReadTags {
             antennas.disableAll();
             antennas.enableById(new short[]{1});
 
+            //Search mode determines how reader change tags' state, or how frequent a tag is reported when in sensor field
+            //https://support.impinj.com/hc/en-us/articles/202756158-Understanding-EPC-Gen2-Search-Modes-and-Sessions
+            //TagFocus uses Singletarget session 1 with fewer reports when in sensor field
+            settings.setSearchMode(SearchMode.TagFocus);
+            settings.setSession(1);
 
             // Define reader range
             if (sensitivityDbm == null) {
