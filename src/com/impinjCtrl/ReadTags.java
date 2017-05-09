@@ -8,6 +8,8 @@ public class ReadTags {
 
         try {
             String hostname = System.getProperty(Properties.hostname);
+            String sensitivityDbm = System.getProperty(Properties.sensitivityDbm);
+            String powerDbm = System.getProperty(Properties.powerDbm);
 
             if (hostname == null) {
                 throw new Exception("Must specify the '"
@@ -47,11 +49,18 @@ public class ReadTags {
             AntennaConfigGroup antennas = settings.getAntennas();
             antennas.disableAll();
             antennas.enableById(new short[]{1});
-            antennas.getAntenna((short) 1).setIsMaxRxSensitivity(false);
-            antennas.getAntenna((short) 1).setIsMaxTxPower(false);
-            antennas.getAntenna((short) 1).setTxPowerinDbm(20.0);
-            antennas.getAntenna((short) 1).setRxSensitivityinDbm(-70);
 
+
+            if (sensitivityDbm == null) {
+                antennas.getAntenna((short) 1).setIsMaxRxSensitivity(true);
+            } else {
+                antennas.getAntenna((short) 1).setRxSensitivityinDbm(Float.parseFloat(sensitivityDbm)); // -70
+            }
+            if (powerDbm == null) {
+                antennas.getAntenna((short) 1).setTxPowerinDbm(Float.parseFloat(powerDbm)); //20.0
+            } else {
+                antennas.getAntenna((short) 1).setIsMaxTxPower(true);
+            }
             reader.setTagReportListener(new ReportFormat());
 
             System.out.println("Applying Settings");
