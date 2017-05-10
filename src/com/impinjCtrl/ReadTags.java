@@ -1,5 +1,6 @@
 package com.impinjCtrl;
 
+import com.google.gson.Gson;
 import com.impinj.octane.ImpinjReader;
 import com.impinj.octane.Settings;
 import com.impinj.octane.OctaneSdkException;
@@ -7,18 +8,16 @@ import java.util.Scanner;
 
 public class ReadTags {
     public static void main(String[] args) {
-
         try {
             String hostname = System.getProperty(Properties.hostname);
 
             if (hostname == null) {
-                throw new Exception("Must specify the '"
-                        + Properties.hostname + "' property");
+                throw new Exception("{\"message\" : \"Must specify hostname\"}");
             }
 
             ImpinjReader reader = new ImpinjReader();
 
-            System.out.println("Connecting...");
+            System.out.println("{\"message\" : \"Connecting\"}");
             reader.connect(hostname);
 
             Settings settings = ReaderSettings.getSettings(reader);
@@ -28,9 +27,7 @@ public class ReadTags {
 
             reader.start();
 
-            System.out.println("Starting reader");
-            System.out.println("Type STOP and return to exit");
-            System.out.println("Type STATUS and return for reader info");
+            System.out.println("{\"message\" : \"Starting reader\"}");
 
             Scanner s = new Scanner(System.in);
             //s.nextLine();
@@ -44,7 +41,7 @@ public class ReadTags {
                     ReaderSettings.getReaderInfo(reader, settings);
                 }
             }
-            System.out.println("Disconnecting.");
+            System.out.println("{\"message\" : \"Disconnecting\"}");
             reader.stop();
             reader.disconnect();
         } catch (OctaneSdkException ex) {
