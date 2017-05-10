@@ -1,6 +1,5 @@
 package com.impinjCtrl;
 
-import com.google.gson.Gson;
 import com.impinj.octane.AntennaConfigGroup;
 import com.impinj.octane.AntennaConfig;
 import com.impinj.octane.FeatureSet;
@@ -13,21 +12,9 @@ import com.impinj.octane.SearchMode;
 import com.impinj.octane.Settings;
 import com.impinj.octane.Status;
 import java.util.ArrayList;
+import org.json.simple.JSONObject;
 
 public class ReaderSettings {
-    public String modelName;
-    public Integer modelNumber;
-    public String firmwareVersion;
-    public Long antennaCount;
-    public Boolean isConnected;
-    public Boolean isSingulating;
-    public Short temperature;
-    public com.impinj.octane.ReaderMode readerMode;
-    public com.impinj.octane.SearchMode searchMode;
-    public Integer session;
-    public String RxSensitivityAntenna1;
-    public String txPowerAntenna1;
-
     public static Settings getSettings (ImpinjReader reader) throws OctaneSdkException {
         Settings settings = reader.queryDefaultSettings();
         String sensitivityDbm = System.getProperty(Properties.sensitivityDbm);
@@ -83,36 +70,34 @@ public class ReaderSettings {
     }
     public static void getReaderInfo (ImpinjReader reader, Settings settings) throws OctaneSdkException {
 
-        ReaderSettings result = new ReaderSettings();
-        Gson gson = new Gson();
+        JSONObject result = new JSONObject();
 
         FeatureSet features = reader.queryFeatureSet();
         Status status = reader.queryStatus();
 
-        result.modelName = features.getModelName();
-        result.modelNumber = features.getModelNumber();
-        result.firmwareVersion = features.getFirmwareVersion();
-        result.antennaCount = features.getAntennaCount();
-        result.isConnected = status.getIsConnected();
-        result.isSingulating = status.getIsSingulating();
-        result.temperature = status.getTemperatureCelsius();
-        result.readerMode = settings.getReaderMode();
-        result.searchMode = settings.getSearchMode();
-        result.session = settings.getSession();
+        result.put("modelName", features.getModelName());
+        result.put("modelNumber", features.getModelNumber());
+        result.put("firmwareVersion", features.getFirmwareVersion());
+        result.put("antennaCount", features.getAntennaCount());
+        result.put("isConnected", status.getIsConnected());
+        result.put("isSingulating", status.getIsSingulating());
+        result.put("temperature", status.getTemperatureCelsius());
+        result.put("readerMode", settings.getReaderMode());
+        result.put("searchMode", settings.getSearchMode());
+        result.put("session", settings.getSession());
         ArrayList<AntennaConfig> ac = settings.getAntennas().getAntennaConfigs();
 
         if (ac.get(0).getIsMaxRxSensitivity()) {
-            result.RxSensitivityAntenna1 = "Max";
+            result.put("RxSensitivityAntenna1", "Max");
         } else {
-            result.RxSensitivityAntenna1 = Double.toString(ac.get(0).getRxSensitivityinDbm()) + " dbm";
+            result.put("RxSensitivityAntenna1", Double.toString(ac.get(0).getRxSensitivityinDbm()) + " dbm");
         }
 
         if (ac.get(0).getIsMaxTxPower()) {
-            result.txPowerAntenna1 = "Max";
+            result.put("txPowerAntenna1", "Max");
         } else {
-            result.txPowerAntenna1 = Double.toString(ac.get(0).getTxPowerinDbm()) + " dbm";
+            result.put("txPowerAntenna1", Double.toString(ac.get(0).getTxPowerinDbm()) + " dbm");
         }
-        String json = gson.toJson(result);
-        System.out.println(json);
+        System.out.println(result.toJSONString());
     }
 }

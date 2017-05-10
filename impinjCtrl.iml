@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="json-simple-1.1.1" level="project" />
     <orderEntry type="library" name="OctaneSDKJava-1.26.2.0-jar-with-dependencies" level="project" />
   </component>
 </module>

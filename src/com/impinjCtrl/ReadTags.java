@@ -1,23 +1,25 @@
 package com.impinjCtrl;
 
-import com.google.gson.Gson;
 import com.impinj.octane.ImpinjReader;
 import com.impinj.octane.Settings;
 import com.impinj.octane.OctaneSdkException;
 import java.util.Scanner;
+import org.json.simple.JSONObject;
 
 public class ReadTags {
     public static void main(String[] args) {
         try {
             String hostname = System.getProperty(Properties.hostname);
+            JSONObject msg = new JSONObject();
 
             if (hostname == null) {
-                throw new Exception("{\"message\" : \"Must specify hostname\"}");
+                msg.put("message", "Must specify hostname");
+                throw new Exception(msg.toJSONString());
             }
 
             ImpinjReader reader = new ImpinjReader();
-
-            System.out.println("{\"message\" : \"Connecting\"}");
+            msg.put("message", "Connecting");
+            System.out.println(msg.toJSONString());
             reader.connect(hostname);
 
             Settings settings = ReaderSettings.getSettings(reader);
@@ -26,8 +28,8 @@ public class ReadTags {
             reader.applySettings(settings);
 
             reader.start();
-
-            System.out.println("{\"message\" : \"Starting reader\"}");
+            msg.put("message", "Starting reader");
+            System.out.println(msg.toJSONString());
 
             Scanner s = new Scanner(System.in);
             //s.nextLine();
@@ -41,7 +43,8 @@ public class ReadTags {
                     ReaderSettings.getReaderInfo(reader, settings);
                 }
             }
-            System.out.println("{\"message\" : \"Disconnecting\"}");
+            msg.put("message", "Disconnecting");
+            System.out.println(msg);
             reader.stop();
             reader.disconnect();
         } catch (OctaneSdkException ex) {
