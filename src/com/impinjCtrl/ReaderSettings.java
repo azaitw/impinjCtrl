@@ -82,8 +82,8 @@ public class ReaderSettings {
         result.put("isConnected", status.getIsConnected());
         result.put("isSingulating", status.getIsSingulating());
         result.put("temperature", status.getTemperatureCelsius());
-        result.put("readerMode", settings.getReaderMode());
-        result.put("searchMode", settings.getSearchMode());
+        result.put("readerMode", settings.getReaderMode().toString());
+        result.put("searchMode", settings.getSearchMode().toString());
         result.put("session", settings.getSession());
         ArrayList<AntennaConfig> ac = settings.getAntennas().getAntennaConfigs();
 
