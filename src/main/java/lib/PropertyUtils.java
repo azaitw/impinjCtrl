@@ -16,7 +16,7 @@ public class PropertyUtils {
         String logDir = "./logs/";
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
         String fileName = System.getProperty(Properties.logFileName);
-        return StringUtils.isEmpty(fileName) ? logDir + "beardude" + "-" + timeStamp + ".log"
+        return TextUtils.isEmpty(fileName) ? logDir + "beardude" + "-" + timeStamp + ".log"
                 : logDir + fileName + "-" + timeStamp + ".log";
     }
 

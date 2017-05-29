@@ -6,7 +6,7 @@ import com.impinj.octane.TagReport;
 import com.impinj.octane.TagReportListener;
 import lib.HttpClient;
 import lib.PropertyUtils;
-import lib.StringUtils;
+import lib.TextUtils;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
@@ -33,7 +33,7 @@ public class ReportFormat implements TagReportListener {
 
         mHttpClient = HttpClient.getInstance();
 
-        if (!StringUtils.isEmpty(mLogFileName)) {
+        if (!TextUtils.isEmpty(mLogFileName)) {
             mLogger = Logger.getLogger("bearDudeRace");
 
             try {
@@ -70,7 +70,7 @@ public class ReportFormat implements TagReportListener {
             aggregateResult.add(result);
 
             // log file
-            if(!StringUtils.isEmpty(mLogFileName)) {
+            if(!TextUtils.isEmpty(mLogFileName)) {
                 mLogger.info(result.toJSONString());
             }
         }

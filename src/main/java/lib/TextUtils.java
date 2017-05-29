@@ -2,10 +2,7 @@ package lib;
 
 import com.sun.istack.internal.Nullable;
 
-/**
- * Created by jimhcc on 5/17/17.
- */
-public class StringUtils {
+public class TextUtils {
 
     /**
      * Returns true if the string is null or 0-length.
