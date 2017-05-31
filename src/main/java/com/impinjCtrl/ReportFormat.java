@@ -81,7 +81,7 @@ public class ReportFormat implements TagReportListener {
         txData.put("payload", aggregateResult);
 
         Request req = new Request.Builder()
-                .url(PropertyUtils.getAPiHost())
+                .url(PropertyUtils.getAPiHost() + "/race/readerRoom?isSocket=1")
                 .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, txData.toJSONString()))
                 .build();
 

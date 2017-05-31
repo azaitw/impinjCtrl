@@ -23,8 +23,8 @@ public class ReaderController {
 
     public static final String EVENT_START_READER = "startreader";
     public static final String EVENT_TERMINATE_READER = "terminatereader";
-    public static final String EVENT_TRANSFER_DATA = "'rxdata'";
-    public static final String EVENT_GET_READER_INFO = "'getreaderinfo'";
+    public static final String EVENT_TRANSFER_DATA = "rxdata";
+    public static final String EVENT_GET_READER_INFO = "getreaderinfo";
 
     private boolean mIsDebugMode;
 
@@ -73,7 +73,7 @@ public class ReaderController {
                                     HttpClient.parseRespose(response);
                                 }
 
-                                // start reader
+                                // init reader
                                 initialReader();
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -93,7 +93,7 @@ public class ReaderController {
 
                     try {
                         if (!mReader.isConnected()) {
-                            mReader.connect(mReaderHost);
+                            initialReader();
                         }
                         mReader.start();
                         mMsg.put("message", "start reader");
@@ -174,11 +174,10 @@ public class ReaderController {
 
         try {
             checkReaderConnection();
+            mReader.connect(mReaderHost);
             Settings settings = ReaderSettings.getSettings(mReader);
             mReader.setTagReportListener(new ReportFormat());
             mReader.applySettings(settings);
-            mReader.connect(mReaderHost);
-            // mReader.start();
 
             if (mIsDebugMode) {
                 Scanner s = new Scanner(System.in);
