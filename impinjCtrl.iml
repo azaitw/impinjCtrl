@@ -12,8 +12,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="json-simple-1.1.1" level="project" />
-    <orderEntry type="library" name="OctaneSDKJava-1.26.2.0-jar-with-dependencies" level="project" />
+    <orderEntry type="library" exported="" name="json-simple-1.1.1" level="project" />
+    <orderEntry type="library" exported="" name="OctaneSDKJava-1.26.2.0-jar-with-dependencies" level="project" />
+    <orderEntry type="library" exported="" name="Maven: io.socket:socket.io-client:0.8.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: io.socket:engine.io-client:0.8.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: com.squareup.okhttp3:okhttp:3.5.0" level="project" />
+    <orderEntry type="library" exported="" name="Maven: com.squareup.okio:okio:1.11.0" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.json:json:20090211" level="project" />
     <orderEntry type="library" name="Maven: io.socket:socket.io-client:0.8.3" level="project" />
     <orderEntry type="library" name="Maven: io.socket:engine.io-client:0.8.3" level="project" />
     <orderEntry type="library" name="Maven: com.squareup.okhttp3:okhttp:3.5.0" level="project" />
