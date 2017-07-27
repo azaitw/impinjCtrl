@@ -11,6 +11,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import okhttp3.Response;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -56,9 +57,10 @@ public class ReportFormat implements TagReportListener {
 
         for (Tag t : tags) {
             JSONObject result = new JSONObject();
-            result.put("event", PropertyUtils.getEventId());
             result.put("epc", t.getEpc().toString().replace(" ", "").toLowerCase());
-            result.put("timestamp", t.getFirstSeenTime().ToString());
+            String ts = t.getFirstSeenTime().ToString();
+            ts = ts.substring(0, ts.length() - 3); // Convert microseconds to milliseconds
+            result.put("timestamp", ts);
 
             if (mIsDebugMode) {
                 result.put("antenna", t.getAntennaPortNumber());
@@ -79,6 +81,8 @@ public class ReportFormat implements TagReportListener {
         // send tag data to api
         JSONObject txData = new JSONObject();
         txData.put("type", ReaderController.EVENT_TRANSFER_DATA);
+        txData.put("event", PropertyUtils.getEventId());
+
         txData.put("payload", aggregateResult);
 
         Request req = new Request.Builder()
@@ -96,6 +100,8 @@ public class ReportFormat implements TagReportListener {
                 if (mIsDebugMode) {
                     HttpClient.parseRespose(response);
                 }
+                ResponseBody body = response.body();
+                body.close();
             }
         });
     }
