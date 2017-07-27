@@ -56,6 +56,7 @@ public class ReportFormat implements TagReportListener {
 
         for (Tag t : tags) {
             JSONObject result = new JSONObject();
+            result.put("event", PropertyUtils.getEventId());
             result.put("epc", t.getEpc().toString().replace(" ", "").toLowerCase());
             result.put("timestamp", t.getFirstSeenTime().ToString());
 
@@ -81,7 +82,7 @@ public class ReportFormat implements TagReportListener {
         txData.put("payload", aggregateResult);
 
         Request req = new Request.Builder()
-                .url(PropertyUtils.getAPiHost() + "/race/readerRoom?isSocket=1")
+                .url(PropertyUtils.getAPiHost() + "/api/race/readerRoom?isSocket=1")
                 .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, txData.toJSONString()))
                 .build();
 

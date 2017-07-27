@@ -7,4 +7,5 @@ public class Properties {
     public static String sensitivityDbm = "sensitivityDbm";
     public static String debugMode = "debugMode";
     public static String logFileName = "logFileName";
+    public static String eventId = "eventId";
 }
