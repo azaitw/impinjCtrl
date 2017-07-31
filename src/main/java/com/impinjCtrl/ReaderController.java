@@ -16,6 +16,7 @@ import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.Response;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -28,6 +29,7 @@ public class ReaderController {
     public static final String EVENT_TRANSFER_DATA = "rxdata";
     public static final String EVENT_GET_READER_STATUS = "getreaderstatus";
     public static final String EVENT_READER_STATUS = "readerstatus";
+    public static Integer mEventId;
 
     private boolean mIsDebugMode;
 
@@ -37,7 +39,8 @@ public class ReaderController {
     private ImpinjReader mReader;
     private Socket mSocket;
     private HttpClient mHttpClient;
-    private Integer mEventId = PropertyUtils.getEventId();
+
+    JSONParser parser = new JSONParser();
 
 
     ReaderController(@NotNull String readerHost) {
@@ -49,10 +52,6 @@ public class ReaderController {
     }
 
     public void initialize() {
-        if (null == mEventId) {
-            System.out.println("Please specify the eventId in parameter");
-            return;
-        }
         mMsg = new JSONObject();
         mReader = new ImpinjReader();
         mHttpClient = HttpClient.getInstance();
@@ -96,9 +95,17 @@ public class ReaderController {
                         if (!mReader.isConnected()) {
                             initialReader();
                         }
+                        String input = args[0].toString();
+                        JSONObject inputJson = (JSONObject) parser.parse(input);
+                        mEventId = Integer.parseInt(inputJson.get("eventId").toString());
+                        System.out.println("mEventId: " + mEventId);
+                        if (null == mEventId) {
+                            System.out.println("Please specify the eventId in parameter");
+                            return;
+                        }
                         mReader.start();
                         mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
-                        mMsg.put("event", PropertyUtils.getEventId());
+                        mMsg.put("event", mEventId);
                         mMsg.put("type", EVENT_READER_STATUS);
                         System.out.println(mMsg.toJSONString());
 
@@ -140,7 +147,7 @@ public class ReaderController {
                     try {
                         // TODO: send back to api (control panel)
                         mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
-                        mMsg.put("event", PropertyUtils.getEventId());
+                        mMsg.put("event", mEventId);
                         mMsg.put("type", EVENT_READER_STATUS);
                         System.out.println(mMsg.toJSONString());
                     } catch (OctaneSdkException ex) {
@@ -187,7 +194,7 @@ public class ReaderController {
 
                         }
                         mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
-                        mMsg.put("event", PropertyUtils.getEventId());
+                        mMsg.put("event", mEventId);
                         mMsg.put("type", EVENT_READER_STATUS);
                         System.out.println(mMsg.toJSONString());
 

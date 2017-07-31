@@ -81,7 +81,7 @@ public class ReportFormat implements TagReportListener {
         // send tag data to api
         JSONObject txData = new JSONObject();
         txData.put("type", ReaderController.EVENT_TRANSFER_DATA);
-        txData.put("event", PropertyUtils.getEventId());
+        txData.put("event", ReaderController.mEventId);
 
         txData.put("payload", aggregateResult);
 
