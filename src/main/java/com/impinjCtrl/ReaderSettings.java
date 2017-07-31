@@ -68,7 +68,7 @@ public class ReaderSettings {
         }
         return settings;
     }
-    public static void getReaderInfo (ImpinjReader reader, Settings settings) throws OctaneSdkException {
+    public static JSONObject getReaderInfo (ImpinjReader reader, Settings settings) throws OctaneSdkException {
 
         JSONObject result = new JSONObject();
 
@@ -77,14 +77,15 @@ public class ReaderSettings {
 
         result.put("modelName", features.getModelName());
         result.put("modelNumber", features.getModelNumber());
-        result.put("firmwareVersion", features.getFirmwareVersion());
+        //result.put("firmwareVersion", features.getFirmwareVersion());
         result.put("antennaCount", features.getAntennaCount());
-        result.put("isConnected", status.getIsConnected());
+        //result.put("isConnected", status.getIsConnected());
         result.put("isSingulating", status.getIsSingulating());
         result.put("temperature", status.getTemperatureCelsius());
         result.put("readerMode", settings.getReaderMode().toString());
         result.put("searchMode", settings.getSearchMode().toString());
         result.put("session", settings.getSession());
+
         ArrayList<AntennaConfig> ac = settings.getAntennas().getAntennaConfigs();
 
         if (ac.get(0).getIsMaxRxSensitivity()) {
@@ -98,6 +99,7 @@ public class ReaderSettings {
         } else {
             result.put("txPowerAntenna1", Double.toString(ac.get(0).getTxPowerinDbm()) + " dbm");
         }
-        System.out.println(result.toJSONString());
+        //System.out.println(result.toJSONString());
+        return result;
     }
 }
