@@ -16,6 +16,7 @@ import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.Response;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -28,8 +29,8 @@ public class ReaderController {
     public static final String EVENT_TRANSFER_DATA = "rxdata";
     public static final String EVENT_GET_READER_STATUS = "getreaderstatus";
     public static final String EVENT_READER_STATUS = "readerstatus";
+    public static Integer mEventId;
 
-    private boolean mIsStarted = false;
     private boolean mIsDebugMode;
 
     private String mReaderHost;
@@ -38,7 +39,8 @@ public class ReaderController {
     private ImpinjReader mReader;
     private Socket mSocket;
     private HttpClient mHttpClient;
-    private Integer mEventId = PropertyUtils.getEventId();
+
+    JSONParser parser = new JSONParser();
 
 
     ReaderController(@NotNull String readerHost) {
@@ -50,10 +52,6 @@ public class ReaderController {
     }
 
     public void initialize() {
-        if (null == mEventId) {
-            System.out.println("Please specify the eventId in parameter");
-            return;
-        }
         mMsg = new JSONObject();
         mReader = new ImpinjReader();
         mHttpClient = HttpClient.getInstance();
@@ -71,7 +69,6 @@ public class ReaderController {
                     Request req = new Request.Builder()
                             .url(mApiHost + "/api/race/joinReaderRoom?sid=" + mSocket.id() + "&isSocket=1")
                             .build();
-
                     mHttpClient.request(req, new Callback() {
                         public void onFailure(Call call, IOException e) {
                             e.printStackTrace();
@@ -98,10 +95,18 @@ public class ReaderController {
                         if (!mReader.isConnected()) {
                             initialReader();
                         }
+                        String input = args[0].toString();
+                        JSONObject inputJson = (JSONObject) parser.parse(input);
+                        mEventId = Integer.parseInt(inputJson.get("eventId").toString());
+                        System.out.println("mEventId: " + mEventId);
+                        if (null == mEventId) {
+                            System.out.println("Please specify the eventId in parameter");
+                            return;
+                        }
                         mReader.start();
-                        mIsStarted = true;
-                        mMsg.put("event", PropertyUtils.getEventId());
-                        mMsg.put("message", "start reader");
+                        mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
+                        mMsg.put("event", mEventId);
+                        mMsg.put("type", EVENT_READER_STATUS);
                         System.out.println(mMsg.toJSONString());
 
                     } catch (OctaneSdkException ex) {
@@ -110,7 +115,27 @@ public class ReaderController {
                         System.out.println(ex.getMessage());
                         ex.printStackTrace(System.out);
                     }
+                    Request sendMsg = new Request.Builder()
+                            .url(PropertyUtils.getAPiHost() + "/api/race/readerRoom?isSocket=1&sid=" + mSocket.id())
+                            .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
+                            .build();
 
+                    mHttpClient.request(sendMsg, new Callback() {
+                        public void onFailure(Call call, IOException e) {
+                            e.printStackTrace();
+                        }
+                        public void onResponse(Call call, Response response) throws IOException {
+                            try {
+                                if (mIsDebugMode) {
+                                    HttpClient.parseRespose(response);
+                                }
+                                ResponseBody body = response.body();
+                                body.close();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
                 }
 
             }).on(EVENT_GET_READER_STATUS, new Emitter.Listener() {
@@ -119,21 +144,22 @@ public class ReaderController {
                     if (null == mReader) {
                         return;
                     }
-                    mMsg.put("event", PropertyUtils.getEventId());
-                    mMsg.put("type", EVENT_READER_STATUS);
-                    if (mIsStarted) {
-                        if (mIsDebugMode) {
-                            mMsg.put("payload", "debug");
-                        } else {
-                            mMsg.put("payload", "started");
-                        }
-                    } else {
-                        mMsg.put("payload", "idle");
+                    try {
+                        // TODO: send back to api (control panel)
+                        mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
+                        mMsg.put("event", mEventId);
+                        mMsg.put("type", EVENT_READER_STATUS);
+                        System.out.println(mMsg.toJSONString());
+                    } catch (OctaneSdkException ex) {
+                        System.out.println(ex.getMessage());
+                    } catch (Exception ex) {
+                        System.out.println(ex.getMessage());
+                        ex.printStackTrace(System.out);
                     }
-                    System.out.println(mMsg.toJSONString());
+
 
                     Request sendMsg = new Request.Builder()
-                    .url(PropertyUtils.getAPiHost() + "/api/race/readerRoom?isSocket=1")
+                    .url(PropertyUtils.getAPiHost() + "/api/race/readerRoom?isSocket=1&sid=" + mSocket.id())
                     .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
                     .build();
 
@@ -165,10 +191,11 @@ public class ReaderController {
                     try {
                         if (mReader.isConnected()) {
                             mReader.stop();
-                            mIsStarted = false;
+
                         }
-                        mMsg.put("event", PropertyUtils.getEventId());
-                        mMsg.put("message", "stop reader");
+                        mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
+                        mMsg.put("event", mEventId);
+                        mMsg.put("type", EVENT_READER_STATUS);
                         System.out.println(mMsg.toJSONString());
 
                     } catch (OctaneSdkException ex) {
@@ -177,7 +204,27 @@ public class ReaderController {
                         System.out.println(ex.getMessage());
                         ex.printStackTrace(System.out);
                     }
+                    Request sendMsg = new Request.Builder()
+                            .url(PropertyUtils.getAPiHost() + "/api/race/readerRoom?isSocket=1&sid=" + mSocket.id())
+                            .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
+                            .build();
 
+                    mHttpClient.request(sendMsg, new Callback() {
+                        public void onFailure(Call call, IOException e) {
+                            e.printStackTrace();
+                        }
+                        public void onResponse(Call call, Response response) throws IOException {
+                            try {
+                                if (mIsDebugMode) {
+                                    HttpClient.parseRespose(response);
+                                }
+                                ResponseBody body = response.body();
+                                body.close();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
                 }
             }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
 
