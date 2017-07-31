@@ -23,4 +23,6 @@ public class PropertyUtils {
     public static String getAPiHost() {
         return System.getProperty(Properties.apiHost, "http://localhost:1337");
     }
+
+    public static Integer getEventId() { return Integer.parseInt(System.getProperty(Properties.eventId)); }
 }
