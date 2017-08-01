@@ -65,6 +65,8 @@ public class ReaderController {
                         System.out.println("socket connected");
                         System.out.println("socket ID" + mSocket.id());
                     }
+                    System.out.println("Connected to socket: " + mApiHost);
+
                     // join / register id to socket io
                     Request req = new Request.Builder()
                             .url(mApiHost + "/api/race/joinReaderRoom?sid=" + mSocket.id() + "&isSocket=1")
