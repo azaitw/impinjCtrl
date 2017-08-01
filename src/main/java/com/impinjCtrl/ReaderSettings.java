@@ -44,27 +44,29 @@ public class ReaderSettings {
         // and continuously optimizes the reader’s configuration
         settings.setReaderMode(ReaderMode.AutoSetDenseReader);
 
-        // set some special settings for antenna 1
-        AntennaConfigGroup antennas = settings.getAntennas();
-        antennas.disableAll();
-        antennas.enableById(new short[]{1});
-
         //Search mode determines how reader change tags' state, or how frequent a tag is reported when in sensor field
         //https://support.impinj.com/hc/en-us/articles/202756158-Understanding-EPC-Gen2-Search-Modes-and-Sessions
         //TagFocus uses Singletarget session 1 with fewer reports when in sensor field
         settings.setSearchMode(SearchMode.TagFocus);
         settings.setSession(1);
 
-        // Define reader range
-        if (sensitivityDbm == null) {
-            antennas.getAntenna((short) 1).setIsMaxRxSensitivity(true);
-        } else {
-            antennas.getAntenna((short) 1).setRxSensitivityinDbm(Float.parseFloat(sensitivityDbm)); // -70
-        }
-        if (powerDbm == null) {
-            antennas.getAntenna((short) 1).setIsMaxTxPower(true);
-        } else {
-            antennas.getAntenna((short) 1).setTxPowerinDbm(Float.parseFloat(powerDbm)); //20.0
+        // set some special settings for antenna 1
+        AntennaConfigGroup antennas = settings.getAntennas();
+        antennas.disableAll();
+        for (short i = 1; i <= 4; i++) {
+            antennas.enableById(new short[]{i});
+
+            // Define reader range
+            if (sensitivityDbm == null) {
+                antennas.getAntenna(i).setIsMaxRxSensitivity(true);
+            } else {
+                antennas.getAntenna(i).setRxSensitivityinDbm(Float.parseFloat(sensitivityDbm)); // -70
+            }
+            if (powerDbm == null) {
+                antennas.getAntenna(i).setIsMaxTxPower(true);
+            } else {
+                antennas.getAntenna(i).setTxPowerinDbm(Float.parseFloat(powerDbm)); //20.0
+            }
         }
         return settings;
     }
