@@ -1,6 +1,7 @@
 package com.impinjCtrl;
 
 import com.impinj.octane.ImpinjReader;
+import com.impinj.octane.LocationReport;
 import com.impinj.octane.OctaneSdkException;
 import com.impinj.octane.Settings;
 import com.sun.istack.internal.NotNull;
@@ -265,8 +266,11 @@ public class ReaderController {
             while (s.hasNextLine() && mReader.isConnected()) {
                 String line = s.nextLine();
                 System.out.println(line);
-                if (line.equals("STOP")) {
-                    break;
+                if (line.equals("START")) {
+                    mReader.start();
+                } else if (line.equals("STOP")) {
+                    mReader.stop();
+                    //break;
                 } else if (line.equals("STATUS")) {
                     ReaderSettings.getReaderInfo(mReader, settings);
                 }
