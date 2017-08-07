@@ -70,7 +70,7 @@ public class ReaderController {
 
                     // join / register id to socket io
                     Request req = new Request.Builder()
-                            .url(mApiHost + "/api/race/joinReaderRoom?sid=" + mSocket.id() + "&isSocket=1")
+                            .url(mApiHost + "/api/socket/impinj?sid=" + mSocket.id())
                             .build();
                     mHttpClient.request(req, new Callback() {
                         public void onFailure(Call call, IOException e) {
@@ -119,7 +119,7 @@ public class ReaderController {
                         ex.printStackTrace(System.out);
                     }
                     Request sendMsg = new Request.Builder()
-                            .url(PropertyUtils.getAPiHost() + "/api/race/readerRoom?isSocket=1&sid=" + mSocket.id())
+                            .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocket.id())
                             .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
                             .build();
 
@@ -162,7 +162,7 @@ public class ReaderController {
 
 
                     Request sendMsg = new Request.Builder()
-                    .url(PropertyUtils.getAPiHost() + "/api/race/readerRoom?isSocket=1&sid=" + mSocket.id())
+                    .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocket.id())
                     .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
                     .build();
 
@@ -208,7 +208,7 @@ public class ReaderController {
                         ex.printStackTrace(System.out);
                     }
                     Request sendMsg = new Request.Builder()
-                            .url(PropertyUtils.getAPiHost() + "/api/race/readerRoom?isSocket=1&sid=" + mSocket.id())
+                            .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocket.id())
                             .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
                             .build();
 
