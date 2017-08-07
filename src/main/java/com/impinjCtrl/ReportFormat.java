@@ -65,11 +65,11 @@ public class ReportFormat implements TagReportListener {
             if (mIsDebugMode) {
                 result.put("antenna", t.getAntennaPortNumber());
                 result.put("doppler", t.getRfDopplerFrequency());
-                result.put("peakRssi", t.getRfDopplerFrequency());
-                result.put("channelMhz", t.getChannelInMhz());
-                System.out.println(result.toJSONString());
+                result.put("peakRssi", t.getPeakRssiInDbm());
+                result.put("phase angel", t.getPhaseAngleInRadians());
+                result.put("seen count", t.getTagSeenCount());
+              //  result.put("channelMhz", t.getChannelInMhz());
             }
-
             aggregateResult.add(result);
 
             // log file
@@ -82,7 +82,6 @@ public class ReportFormat implements TagReportListener {
         JSONObject txData = new JSONObject();
         txData.put("type", ReaderController.EVENT_TRANSFER_DATA);
         txData.put("event", ReaderController.mEventId);
-
         txData.put("payload", aggregateResult);
 
         Request req = new Request.Builder()

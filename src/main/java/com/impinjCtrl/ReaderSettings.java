@@ -13,22 +13,23 @@ import com.impinj.octane.Settings;
 import com.impinj.octane.Status;
 import java.util.ArrayList;
 import org.json.simple.JSONObject;
+import lib.PropertyUtils;
 
 public class ReaderSettings {
     public static Settings getSettings (ImpinjReader reader) throws OctaneSdkException {
         Settings settings = reader.queryDefaultSettings();
         String sensitivityDbm = System.getProperty(Properties.sensitivityDbm);
         String powerDbm = System.getProperty(Properties.powerDbm);
-        String debugMode = System.getProperty(Properties.debugMode);
+        Boolean debugMode = PropertyUtils.isDebugMode();
 
         ReportConfig report = settings.getReport();
         report.setIncludeFirstSeenTime(true);
         report.setMode(ReportMode.Individual);
-        if (debugMode != null && debugMode.equals("1")) {
+        if (debugMode) {
             report.setIncludeAntennaPortNumber(true);
             report.setIncludeChannel(true);
             report.setIncludeCrc(true);
-            report.setIncludeDopplerFrequency(true);
+            //report.setIncludeDopplerFrequency(true);
             report.setIncludePeakRssi(true);
             report.setIncludePhaseAngle(true);
 
@@ -46,16 +47,25 @@ public class ReaderSettings {
 
         //Search mode determines how reader change tags' state, or how frequent a tag is reported when in sensor field
         //https://support.impinj.com/hc/en-us/articles/202756158-Understanding-EPC-Gen2-Search-Modes-and-Sessions
+        //https://support.impinj.com/hc/en-us/articles/202756368-Optimizing-Tag-Throughput-Using-ReaderMode
         //TagFocus uses Singletarget session 1 with fewer reports when in sensor field
-        settings.setSearchMode(SearchMode.TagFocus);
-        settings.setSession(1);
+        // Race timing recommendation: session 1
+        // http://racetiming.wimsey.co/2015/05/rfid-inventory-search-modes.html
+        if (debugMode) {
+            //DualTarget
+            settings.setSearchMode(SearchMode.DualTarget);
+        } else {
+            //settings.setSearchMode(SearchMode.SingleTarget);
+            settings.setSearchMode(SearchMode.TagFocus);
+            settings.setSession(1);
+        }
 
-        // set some special settings for antenna 1
+        // set some special settings for antennas
         AntennaConfigGroup antennas = settings.getAntennas();
         antennas.disableAll();
+        antennas.enableAll();
         for (short i = 1; i <= 4; i++) {
-            antennas.enableById(new short[]{i});
-
+            //antennas.enableById(new short[]{i});
             // Define reader range
             if (sensitivityDbm == null) {
                 antennas.getAntenna(i).setIsMaxRxSensitivity(true);
@@ -90,18 +100,11 @@ public class ReaderSettings {
 
         ArrayList<AntennaConfig> ac = settings.getAntennas().getAntennaConfigs();
 
-        if (ac.get(0).getIsMaxRxSensitivity()) {
-            result.put("RxSensitivityAntenna1", "Max");
-        } else {
-            result.put("RxSensitivityAntenna1", Double.toString(ac.get(0).getRxSensitivityinDbm()) + " dbm");
+        for (short i = 0; i < ac.size(); i ++) {
+            result.put("getRxSensitivityinDbm_" + (i + 1), Double.toString(ac.get(i).getRxSensitivityinDbm()) + " dbm");
+            result.put("getTxPowerinDbm_" + (i + 1), ac.get(i).getTxPowerinDbm() );
         }
-
-        if (ac.get(0).getIsMaxTxPower()) {
-            result.put("txPowerAntenna1", "Max");
-        } else {
-            result.put("txPowerAntenna1", Double.toString(ac.get(0).getTxPowerinDbm()) + " dbm");
-        }
-        //System.out.println(result.toJSONString());
+        System.out.println(result.toJSONString());
         return result;
     }
 }
