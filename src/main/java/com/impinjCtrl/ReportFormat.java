@@ -68,7 +68,7 @@ public class ReportFormat implements TagReportListener {
                 result.put("doppler", t.getRfDopplerFrequency());
                 result.put("peakRssi", t.getPeakRssiInDbm());
                 result.put("phase angel", t.getPhaseAngleInRadians());
-                result.put("seen count", t.getTagSeenCount());
+                //result.put("seen count", t.getTagSeenCount());
               //  result.put("channelMhz", t.getChannelInMhz());
             }
             aggregateResult.add(result);
@@ -79,30 +79,30 @@ public class ReportFormat implements TagReportListener {
             }
         }
 
-        // send tag data to api
-        JSONObject txData = new JSONObject();
-        txData.put("type", ReaderController.EVENT_TRANSFER_DATA);
-        txData.put("event", ReaderController.mEventId);
-        txData.put("payload", aggregateResult);
+        if (!mIsDebugMode) {
+            // send tag data to api
+            JSONObject txData = new JSONObject();
+            txData.put("type", ReaderController.EVENT_TRANSFER_DATA);
+            txData.put("event", ReaderController.mEventId);
+            txData.put("payload", aggregateResult);
 
-        Request req = new Request.Builder()
-                .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + ReaderController.mSocketId)
-                .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, txData.toJSONString()))
-                .build();
+            Request req = new Request.Builder()
+                    .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + ReaderController.mSocketId)
+                    .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, txData.toJSONString()))
+                    .build();
 
-        mHttpClient.request(req, new Callback() {
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-                System.out.println("update tag data fail");
-            }
-
-            public void onResponse(Call call, Response response) throws IOException {
-                if (mIsDebugMode) {
-                    HttpClient.parseRespose(response);
+            mHttpClient.request(req, new Callback() {
+                public void onFailure(Call call, IOException e) {
+                    e.printStackTrace();
+                    System.out.println("update tag data fail");
                 }
-                ResponseBody body = response.body();
-                body.close();
-            }
-        });
+
+                public void onResponse(Call call, Response response) throws IOException {
+                    ResponseBody body = response.body();
+                    body.close();
+                }
+            });
+        }
+
     }
 }
