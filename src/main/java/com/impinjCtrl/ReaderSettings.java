@@ -25,20 +25,6 @@ public class ReaderSettings {
         ReportConfig report = settings.getReport();
         report.setIncludeFirstSeenTime(true);
         report.setMode(ReportMode.Individual);
-        if (debugMode) {
-            report.setIncludeAntennaPortNumber(true);
-            report.setIncludeChannel(true);
-            report.setIncludeCrc(true);
-            //report.setIncludeDopplerFrequency(true);
-            report.setIncludePeakRssi(true);
-            report.setIncludePhaseAngle(true);
-
-            //report.setIncludeFastId(true);
-            //report.setIncludeGpsCoordinates(true);
-            //report.setIncludeLastSeenTime(true);
-            //report.setIncludePcBits(true);
-            //report.setIncludeSeenCount(true);
-        }
         // The reader can be set into various modes in which reader
         // dynamics are optimized for specific regions and environments.
         // The following mode, AutoSetDenseReader, monitors RF noise and interference and then automatically
@@ -46,14 +32,22 @@ public class ReaderSettings {
         settings.setReaderMode(ReaderMode.AutoSetDenseReader);
 
         //Search mode determines how reader change tags' state, or how frequent a tag is reported when in sensor field
-        //https://support.impinj.com/hc/en-us/articles/202756158-Understanding-EPC-Gen2-Search-Modes-and-Sessions
-        //https://support.impinj.com/hc/en-us/articles/202756368-Optimizing-Tag-Throughput-Using-ReaderMode
-        //TagFocus uses Singletarget session 1 with fewer reports when in sensor field
+        // https://support.impinj.com/hc/en-us/articles/202756158-Understanding-EPC-Gen2-Search-Modes-and-Sessions
+        // https://support.impinj.com/hc/en-us/articles/202756368-Optimizing-Tag-Throughput-Using-ReaderMode
+        // TagFocus uses Singletarget session 1 with fewer reports when in sensor field
         // Race timing recommendation: session 1
         // http://racetiming.wimsey.co/2015/05/rfid-inventory-search-modes.html
         if (debugMode) {
             //DualTarget
             settings.setSearchMode(SearchMode.DualTarget);
+            settings.setSession(1);
+            // Other report items
+            report.setIncludeAntennaPortNumber(true);
+            report.setIncludeChannel(true);
+            report.setIncludeCrc(true);
+            //report.setIncludeDopplerFrequency(true);
+            report.setIncludePeakRssi(true);
+            report.setIncludePhaseAngle(true);
         } else {
             //settings.setSearchMode(SearchMode.SingleTarget);
             settings.setSearchMode(SearchMode.TagFocus);
@@ -63,7 +57,7 @@ public class ReaderSettings {
         // set some special settings for antennas
         AntennaConfigGroup antennas = settings.getAntennas();
         antennas.disableAll();
-        antennas.enableAll();
+
 
         for (short i = 1; i <= 4; i++) {
             //antennas.enableById(new short[]{i});
@@ -79,6 +73,7 @@ public class ReaderSettings {
                 antennas.getAntenna(i).setTxPowerinDbm(Float.parseFloat(powerDbm)); //20.0
             }
         }
+        antennas.enableAll();
         return settings;
     }
     public static JSONObject getReaderInfo (ImpinjReader reader, Settings settings) throws OctaneSdkException {
@@ -99,14 +94,22 @@ public class ReaderSettings {
         result.put("searchMode", settings.getSearchMode().toString());
         result.put("session", settings.getSession());
 
-        /*
+
         ArrayList<AntennaConfig> ac = settings.getAntennas().getAntennaConfigs();
 
-        for (short i = 0; i < ac.size(); i ++) {
-            result.put("getRxSensitivityinDbm_" + (i + 1), Double.toString(ac.get(i).getRxSensitivityinDbm()) + " dbm");
-            result.put("getTxPowerinDbm_" + (i + 1), ac.get(i).getTxPowerinDbm() );
+        Boolean isMaxRxSensitivity = ac.get(0).getIsMaxRxSensitivity();
+        Boolean isMaxTxPower = ac.get(0).getIsMaxTxPower();
+        String rxSensitivity = "max";
+        String txPower = "max";
+        if (!isMaxRxSensitivity) {
+            rxSensitivity = String.valueOf(ac.get(0).getRxSensitivityinDbm()) + "Dbm";
         }
-        */
+        if (!isMaxTxPower) {
+            txPower = String.valueOf(ac.get(0).getTxPowerinDbm()) + "Dbm";
+        }
+        result.put("getRxSensitivityinDbm", rxSensitivity);
+        result.put("getTxPowerinDbm", txPower);
+
         System.out.println(result.toJSONString());
         return result;
     }
