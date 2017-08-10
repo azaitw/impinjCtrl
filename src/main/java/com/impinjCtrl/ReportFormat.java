@@ -60,7 +60,8 @@ public class ReportFormat implements TagReportListener {
             result.put("epc", t.getEpc().toString().replace(" ", "").toLowerCase());
             String ts = t.getFirstSeenTime().ToString();
             ts = ts.substring(0, ts.length() - 3); // Convert microseconds to milliseconds
-            result.put("timestamp", ts);
+            //result.put("timestamp", ts);
+            result.put("timestamp", PropertyUtils.getTimestamp());
 
             if (mIsDebugMode) {
                 result.put("antenna", t.getAntennaPortNumber());
@@ -85,7 +86,7 @@ public class ReportFormat implements TagReportListener {
         txData.put("payload", aggregateResult);
 
         Request req = new Request.Builder()
-                .url(PropertyUtils.getAPiHost() + "/api/race/readerRoom?isSocket=1")
+                .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + ReaderController.mSocketId)
                 .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, txData.toJSONString()))
                 .build();
 

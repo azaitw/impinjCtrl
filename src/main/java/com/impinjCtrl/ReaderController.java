@@ -30,7 +30,8 @@ public class ReaderController {
     public static final String EVENT_TRANSFER_DATA = "rxdata";
     public static final String EVENT_GET_READER_STATUS = "getreaderstatus";
     public static final String EVENT_READER_STATUS = "readerstatus";
-    public static Integer mEventId;
+    public static String mEventId;
+    public static String mSocketId;
 
     private boolean mIsDebugMode;
 
@@ -62,15 +63,16 @@ public class ReaderController {
             mSocket = IO.socket(mApiHost);
             mSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
                 public void call(Object... args) {
+                    mSocketId = mSocket.id();
                     if (mIsDebugMode) {
                         System.out.println("socket connected");
-                        System.out.println("socket ID" + mSocket.id());
+                        System.out.println("socket ID" + mSocketId);
                     }
                     System.out.println("Connected to socket: " + mApiHost);
 
                     // join / register id to socket io
                     Request req = new Request.Builder()
-                            .url(mApiHost + "/api/socket/impinj?sid=" + mSocket.id())
+                            .url(mApiHost + "/api/socket/impinj?sid=" + mSocketId)
                             .build();
                     mHttpClient.request(req, new Callback() {
                         public void onFailure(Call call, IOException e) {
@@ -100,8 +102,8 @@ public class ReaderController {
                         }
                         String input = args[0].toString();
                         JSONObject inputJson = (JSONObject) parser.parse(input);
-                        mEventId = Integer.parseInt(inputJson.get("eventId").toString());
-                        System.out.println("mEventId: " + mEventId);
+                        mEventId = inputJson.get("eventId").toString();
+                        //System.out.println("mEventId: " + mEventId);
                         if (null == mEventId) {
                             System.out.println("Please specify the eventId in parameter");
                             return;
@@ -119,7 +121,7 @@ public class ReaderController {
                         ex.printStackTrace(System.out);
                     }
                     Request sendMsg = new Request.Builder()
-                            .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocket.id())
+                            .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
                             .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
                             .build();
 
@@ -162,7 +164,7 @@ public class ReaderController {
 
 
                     Request sendMsg = new Request.Builder()
-                    .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocket.id())
+                    .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
                     .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
                     .build();
 
@@ -208,7 +210,7 @@ public class ReaderController {
                         ex.printStackTrace(System.out);
                     }
                     Request sendMsg = new Request.Builder()
-                            .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocket.id())
+                            .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
                             .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
                             .build();
 
@@ -267,6 +269,9 @@ public class ReaderController {
                 String line = s.nextLine();
                 System.out.println(line);
                 if (line.equals("START")) {
+                    if (!mReader.isConnected()) {
+                        initialReader();
+                    }
                     mReader.start();
                 } else if (line.equals("STOP")) {
                     mReader.stop();

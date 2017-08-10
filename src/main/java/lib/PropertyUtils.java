@@ -1,7 +1,6 @@
 package lib;
 
 import com.impinjCtrl.Properties;
-
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -21,8 +20,14 @@ public class PropertyUtils {
     }
 
     public static String getAPiHost() {
-        return System.getProperty(Properties.apiHost, "http://localhost:1337");
+        return System.getProperty(Properties.apiHost);
     }
 
-    public static Integer getEventId() { return Integer.parseInt(System.getProperty(Properties.eventId)); }
+    public static Integer getEventId() {
+        return Integer.parseInt(System.getProperty(Properties.eventId));
+    }
+
+    public static Long getTimestamp() {
+        return System.currentTimeMillis();
+    }
 }
