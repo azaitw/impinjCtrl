@@ -64,6 +64,7 @@ public class ReaderSettings {
         AntennaConfigGroup antennas = settings.getAntennas();
         antennas.disableAll();
         antennas.enableAll();
+
         for (short i = 1; i <= 4; i++) {
             //antennas.enableById(new short[]{i});
             // Define reader range
@@ -98,12 +99,14 @@ public class ReaderSettings {
         result.put("searchMode", settings.getSearchMode().toString());
         result.put("session", settings.getSession());
 
+        /*
         ArrayList<AntennaConfig> ac = settings.getAntennas().getAntennaConfigs();
 
         for (short i = 0; i < ac.size(); i ++) {
             result.put("getRxSensitivityinDbm_" + (i + 1), Double.toString(ac.get(i).getRxSensitivityinDbm()) + " dbm");
             result.put("getTxPowerinDbm_" + (i + 1), ac.get(i).getTxPowerinDbm() );
         }
+        */
         System.out.println(result.toJSONString());
         return result;
     }
