@@ -5,7 +5,7 @@
 
 執行
 ===================
-java -D192.168.x.y -jar out/artifacts/impinjCtrl_jar/impinjCtrl
+java -DapiHost=http://APIHOST:PORT -DreaderHost=IMPINJ_IP -jar out/impinjCtrl.jar
 
 其他選填選項：
 -DpowerDbm=1.0  設定天線功率
