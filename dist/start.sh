@@ -9,5 +9,4 @@ sudo ntpd -q -g
 sudo /etc/init.d/ntp start
 
 # 3. start command
-java -DapiHost=https://azai.synology.me:8080 -DreaderHost=192.168.0.100 -jar impinjCtrl.ja
-r
+java -DapiHost=https://azai.synology.me:8080 -DreaderHost=192.168.0.100 -jar impinjCtrl.jar

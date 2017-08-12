@@ -12,7 +12,7 @@
         <dependency>
             <groupId>io.socket</groupId>
             <artifactId>socket.io-client</artifactId>
-            <version>0.8.3</version>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
     

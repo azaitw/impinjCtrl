@@ -1,26 +1,26 @@
 package com.impinjCtrl;
 
 import com.impinj.octane.ImpinjReader;
-import com.impinj.octane.LocationReport;
 import com.impinj.octane.OctaneSdkException;
 import com.impinj.octane.Settings;
 import com.sun.istack.internal.NotNull;
 import io.socket.client.IO;
 import io.socket.client.Socket;
+
 import io.socket.emitter.Emitter;
 import lib.HttpClient;
 import lib.PropertyUtils;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
-import okhttp3.Response;
+import okhttp3.*;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Scanner;
 
 public class ReaderController {
@@ -41,6 +41,26 @@ public class ReaderController {
     private ImpinjReader mReader;
     private Socket mSocket;
     private HttpClient mHttpClient;
+    private HostnameVerifier myHostnameVerifier = new HostnameVerifier() {
+        public boolean verify(String hostname, SSLSession session) {
+            return true;
+        }
+    };
+    private X509TrustManager mMyX509TrustManager = new X509TrustManager() {
+        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+            return new java.security.cert.X509Certificate[] {};
+        }
+
+        public void checkClientTrusted(X509Certificate[] chain,
+                                       String authType) throws CertificateException {
+        }
+
+        public void checkServerTrusted(X509Certificate[] chain,
+                                       String authType) throws CertificateException {
+        }
+    };
+    private final TrustManager[] trustAllCerts= new TrustManager[] {mMyX509TrustManager};
+    private SSLContext mySSLContext;
 
     JSONParser parser = new JSONParser();
 
@@ -58,10 +78,33 @@ public class ReaderController {
         if (mIsDebugMode) {
             initialReader();
         } else {
+
             mHttpClient = HttpClient.getInstance();
             System.out.println("Try to connect to socket: " + mApiHost);
             try {
-                mSocket = IO.socket(mApiHost);
+                if (mApiHost.matches("^(https)://.*$")) {
+                    mySSLContext = SSLContext.getInstance("TLS");
+                    mySSLContext.init(null, trustAllCerts, null);
+
+                    OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                            .hostnameVerifier(myHostnameVerifier)
+                            .sslSocketFactory(mySSLContext.getSocketFactory(), mMyX509TrustManager)
+                            .build();
+
+// default settings for all sockets
+
+                    IO.setDefaultOkHttpWebSocketFactory(okHttpClient);
+                    IO.setDefaultOkHttpCallFactory(okHttpClient);
+
+// set as an option
+                    IO.Options opts = new IO.Options();
+                    opts.callFactory = okHttpClient;
+                    opts.webSocketFactory = okHttpClient;
+                    mSocket = IO.socket(mApiHost, opts);
+                } else {
+                    mSocket = IO.socket(mApiHost);
+                }
+
                 mSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
                     public void call(Object... args) {
                         mSocketId = mSocket.id();
@@ -233,6 +276,10 @@ public class ReaderController {
             } catch (URISyntaxException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace(System.out);
+            } catch (NoSuchAlgorithmException E)  {
+
+            } catch (KeyManagementException E) {
+
             }
         }
         mMsg.put("message", "Connecting");
