@@ -1,5 +1,3 @@
 .DS_Store
-logs/
-.idea
-.idea/
 target/
+dist/logs
