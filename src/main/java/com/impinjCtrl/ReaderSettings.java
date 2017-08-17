@@ -49,8 +49,9 @@ public class ReaderSettings {
             report.setIncludePeakRssi(true);
             report.setIncludePhaseAngle(true);
         } else {
+            settings.setSearchMode(SearchMode.DualTarget);
             //settings.setSearchMode(SearchMode.SingleTarget);
-            settings.setSearchMode(SearchMode.TagFocus);
+            //settings.setSearchMode(SearchMode.TagFocus);
             settings.setSession(1);
         }
 
