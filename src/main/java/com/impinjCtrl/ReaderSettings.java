@@ -18,8 +18,6 @@ import lib.PropertyUtils;
 public class ReaderSettings {
     public static Settings getSettings (ImpinjReader reader) throws OctaneSdkException {
         Settings settings = reader.queryDefaultSettings();
-        String sensitivityDbm = System.getProperty(Properties.sensitivityDbm);
-        String powerDbm = System.getProperty(Properties.powerDbm);
         Boolean debugMode = PropertyUtils.isDebugMode();
 
         ReportConfig report = settings.getReport();
@@ -37,10 +35,12 @@ public class ReaderSettings {
         // TagFocus uses Singletarget session 1 with fewer reports when in sensor field
         // Race timing recommendation: session 1
         // http://racetiming.wimsey.co/2015/05/rfid-inventory-search-modes.html
+        settings.setSearchMode(SearchMode.DualTarget);
+        settings.setSession(1);
+        //settings.setSearchMode(SearchMode.SingleTarget);
+        //settings.setSearchMode(SearchMode.TagFocus);
         if (debugMode) {
             //DualTarget
-            settings.setSearchMode(SearchMode.DualTarget);
-            settings.setSession(1);
             // Other report items
             report.setIncludeAntennaPortNumber(true);
             report.setIncludeChannel(true);
@@ -48,31 +48,18 @@ public class ReaderSettings {
             //report.setIncludeDopplerFrequency(true);
             report.setIncludePeakRssi(true);
             report.setIncludePhaseAngle(true);
-        } else {
-            settings.setSearchMode(SearchMode.DualTarget);
-            //settings.setSearchMode(SearchMode.SingleTarget);
-            //settings.setSearchMode(SearchMode.TagFocus);
-            settings.setSession(1);
         }
+
 
         // set some special settings for antennas
         AntennaConfigGroup antennas = settings.getAntennas();
         antennas.disableAll();
 
-
         for (short i = 1; i <= 4; i++) {
             //antennas.enableById(new short[]{i});
             // Define reader range
-            if (sensitivityDbm == null) {
-                antennas.getAntenna(i).setIsMaxRxSensitivity(true);
-            } else {
-                antennas.getAntenna(i).setRxSensitivityinDbm(Float.parseFloat(sensitivityDbm)); // -70
-            }
-            if (powerDbm == null) {
-                antennas.getAntenna(i).setIsMaxTxPower(true);
-            } else {
-                antennas.getAntenna(i).setTxPowerinDbm(Float.parseFloat(powerDbm)); //20.0
-            }
+            antennas.getAntenna(i).setIsMaxRxSensitivity(true);
+            antennas.getAntenna(i).setIsMaxTxPower(true);
         }
         antennas.enableAll();
         return settings;
@@ -86,9 +73,7 @@ public class ReaderSettings {
 
         result.put("modelName", features.getModelName());
         result.put("modelNumber", features.getModelNumber());
-        //result.put("firmwareVersion", features.getFirmwareVersion());
         result.put("antennaCount", features.getAntennaCount());
-        //result.put("isConnected", status.getIsConnected());
         result.put("isSingulating", status.getIsSingulating());
         result.put("temperature", status.getTemperatureCelsius());
         result.put("readerMode", settings.getReaderMode().toString());
