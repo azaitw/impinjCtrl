@@ -9,6 +9,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class HttpClient {
     private static HttpClient instance;
@@ -25,7 +26,11 @@ public class HttpClient {
     }
 
     private HttpClient(){
-        mHttpClient = new OkHttpClient();
+        mHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .build();
     }
 
     public void request (Request request, Callback cb) {
