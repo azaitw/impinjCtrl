@@ -12,9 +12,11 @@ import lib.HttpClient;
 import lib.PropertyUtils;
 import okhttp3.*;
 import org.json.simple.JSONObject;
+//import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 
 import javax.net.ssl.*;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
@@ -22,16 +24,27 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Scanner;
+import com.sun.istack.internal.Nullable;
 
 public class ReaderController {
 
     public static final String EVENT_START_READER = "startreader";
     public static final String EVENT_TERMINATE_READER = "terminatereader";
     public static final String EVENT_TRANSFER_DATA = "rxdata";
+    public static final String EVENT_TRANSFER_DATA_TESTMODE = "rxdatatest";
     public static final String EVENT_GET_READER_STATUS = "getreaderstatus";
     public static final String EVENT_READER_STATUS = "readerstatus";
     public static String mEventId;
     public static String mSocketId;
+    public static String mRaceId;
+    public static Long mValidIntervalMs;
+    public static JSONObject mSlaveEpcMap;
+    public static String mLogFileName;
+    public static JSONObject mReadWrapper;
+    public static JSONObject mRecordsHashTable;
+    public static JSONObject mSlaveEpcStat;
+    //public static JSONArray mReadResultRaw;
+    public static HttpClient mHttpClient;
 
     private boolean mIsDebugMode;
 
@@ -40,7 +53,7 @@ public class ReaderController {
     private JSONObject mMsg;
     private ImpinjReader mReader;
     private Socket mSocket;
-    private HttpClient mHttpClient;
+
     private HostnameVerifier myHostnameVerifier = new HostnameVerifier() {
         public boolean verify(String hostname, SSLSession session) {
             return true;
@@ -74,11 +87,10 @@ public class ReaderController {
     public void initialize() {
         mMsg = new JSONObject();
         mReader = new ImpinjReader();
-
+        mMsg.put("type", EVENT_READER_STATUS);
         if (mIsDebugMode) {
             initialReader();
         } else {
-
             mHttpClient = HttpClient.getInstance();
             System.out.println("Try to connect to socket: " + mApiHost);
             try {
@@ -92,10 +104,8 @@ public class ReaderController {
                             .build();
 
 // default settings for all sockets
-
                     IO.setDefaultOkHttpWebSocketFactory(okHttpClient);
                     IO.setDefaultOkHttpCallFactory(okHttpClient);
-
 // set as an option
                     IO.Options opts = new IO.Options();
                     opts.callFactory = okHttpClient;
@@ -111,22 +121,7 @@ public class ReaderController {
                         System.out.println("Connected to socket: " + mApiHost + ". socket ID: " + mSocketId);
 
                         // join / register id to socket io
-                        Request req = new Request.Builder()
-                                .url(mApiHost + "/api/socket/impinj?sid=" + mSocketId)
-                                .build();
-                        mHttpClient.request(req, new Callback() {
-                            public void onFailure(Call call, IOException e) {
-                                e.printStackTrace();
-                            }
-
-                            public void onResponse(Call call, Response response) throws IOException {
-                                try {
-                                    initialReader();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
+                        postToApi(null);
                     }
                 }).on(EVENT_START_READER, new Emitter.Listener() {
                     public void call(Object... args) {
@@ -138,45 +133,49 @@ public class ReaderController {
                             if (!mReader.isConnected()) {
                                 initialReader();
                             }
+
                             String input = args[0].toString();
                             JSONObject inputJson = (JSONObject) parser.parse(input);
-                            mEventId = inputJson.get("eventId").toString();
-                            //System.out.println("mEventId: " + mEventId);
-                            if (null == mEventId) {
-                                System.out.println("Please specify the eventId in parameter");
+                            if (inputJson.get("eventId") != null) {
+                                mEventId = inputJson.get("eventId").toString();
+                                mMsg.put("event", mEventId);
+                            }
+                            if (inputJson.get("raceId") != null) {
+                                mRaceId = inputJson.get("raceId").toString();
+                                mMsg.put("race", mRaceId);
+                            }
+                            if (null == mEventId && null == mRaceId) {
+                                System.out.println("Please specify eventId or raceId in parameter");
                                 return;
                             }
+                            mValidIntervalMs = (Long) inputJson.get("validIntervalMs");
+                            mSlaveEpcMap = (JSONObject) inputJson.get("slaveEpcMap");
+                            if (mSlaveEpcMap == null) {
+                                mSlaveEpcMap = new JSONObject();
+                            }
+                            mReadWrapper = new JSONObject();
+                            mRecordsHashTable = new JSONObject();
+                            mSlaveEpcStat = new JSONObject();
+                            //mReadResultRaw = new JSONArray();
+                            mLogFileName = PropertyUtils.getLogFileName();
                             mReader.start();
                             mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
-                            mMsg.put("event", mEventId);
-                            mMsg.put("type", EVENT_READER_STATUS);
                             System.out.println(mMsg.toJSONString());
-
                         } catch (OctaneSdkException ex) {
                             System.out.println(ex.getMessage());
                         } catch (Exception ex) {
                             System.out.println(ex.getMessage());
                             ex.printStackTrace(System.out);
                         }
-                        Request sendMsg = new Request.Builder()
-                                .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
-                                .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
-                                .build();
-
-                        mHttpClient.request(sendMsg, new Callback() {
-                            public void onFailure(Call call, IOException e) {
-                                e.printStackTrace();
-                            }
-
-                            public void onResponse(Call call, Response response) throws IOException {
-                                try {
-                                    ResponseBody body = response.body();
-                                    body.close();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
+                        // Initialize an empty log file
+                        try {
+                            FileWriter file = new FileWriter(ReaderController.mLogFileName);
+                            file.write("");
+                            file.flush();
+                        } catch (IOException e) {
+                            System.out.println(e.getMessage());
+                        }
+                        postToApi(mMsg);
                     }
 
                 }).on(EVENT_GET_READER_STATUS, new Emitter.Listener() {
@@ -187,9 +186,12 @@ public class ReaderController {
                         }
                         try {
                             // TODO: send back to api (control panel)
+                            if (mRaceId != null) {
+                                mMsg.put("race", mRaceId);
+                            } else {
+                                mMsg.put("event", mEventId);
+                            }
                             mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
-                            mMsg.put("event", mEventId);
-                            mMsg.put("type", EVENT_READER_STATUS);
                             System.out.println(mMsg.toJSONString());
                         } catch (OctaneSdkException ex) {
                             System.out.println(ex.getMessage());
@@ -197,27 +199,7 @@ public class ReaderController {
                             System.out.println(ex.getMessage());
                             ex.printStackTrace(System.out);
                         }
-
-
-                        Request sendMsg = new Request.Builder()
-                                .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
-                                .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
-                                .build();
-
-                        mHttpClient.request(sendMsg, new Callback() {
-                            public void onFailure(Call call, IOException e) {
-                                e.printStackTrace();
-                            }
-
-                            public void onResponse(Call call, Response response) throws IOException {
-                                try {
-                                    ResponseBody body = response.body();
-                                    body.close();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
+                        postToApi(mMsg);
 
                     }
                 }).on(EVENT_TERMINATE_READER, new Emitter.Listener() {
@@ -232,36 +214,21 @@ public class ReaderController {
                                 mReader.stop();
 
                             }
+                            if (mRaceId != null) {
+                                mMsg.put("race", mRaceId);
+                            }
+                            if (mEventId != null) {
+                                mMsg.put("event", mEventId);
+                            }
                             mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
-                            mMsg.put("event", mEventId);
-                            mMsg.put("type", EVENT_READER_STATUS);
                             System.out.println(mMsg.toJSONString());
-
                         } catch (OctaneSdkException ex) {
                             System.out.println(ex.getMessage());
                         } catch (Exception ex) {
                             System.out.println(ex.getMessage());
                             ex.printStackTrace(System.out);
                         }
-                        Request sendMsg = new Request.Builder()
-                                .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
-                                .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
-                                .build();
-
-                        mHttpClient.request(sendMsg, new Callback() {
-                            public void onFailure(Call call, IOException e) {
-                                e.printStackTrace();
-                            }
-
-                            public void onResponse(Call call, Response response) throws IOException {
-                                try {
-                                    ResponseBody body = response.body();
-                                    body.close();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
+                        postToApi(mMsg);
                     }
                 }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
 
@@ -283,15 +250,42 @@ public class ReaderController {
             }
         }
         mMsg.put("message", "Connecting");
-
     }
-
+    public void postToApi(@Nullable final JSONObject obj) {
+        Request sendMsg;
+        if (obj == null) {
+            sendMsg = new Request.Builder()
+                    .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
+                    .build();
+        } else {
+            sendMsg = new Request.Builder()
+                    .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
+                    .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, obj.toJSONString()))
+                    .build();
+        }
+        mHttpClient.request(sendMsg, new Callback() {
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    if (obj == null) {
+                        initialReader();
+                    } else {
+                        ResponseBody body = response.body();
+                        body.close();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
     private void initialReader() {
         if (null == mReader) {
             System.out.println("reader obj is null: initialReader");
             return;
         }
-
         try {
             checkReaderConnection();
             mReader.connect(mReaderHost);
