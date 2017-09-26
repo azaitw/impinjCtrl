@@ -29,4 +29,6 @@ public class PropertyUtils {
     public static Long getTimestamp() {
         return System.currentTimeMillis();
     }
+
+    public static Integer getDefaultValidIntervalMs () { return Integer.parseInt(System.getProperty(Properties.validIntervalMs)); }
 }
