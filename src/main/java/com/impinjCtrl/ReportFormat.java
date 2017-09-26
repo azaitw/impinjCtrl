@@ -21,40 +21,46 @@ import java.util.List;
 
 public class ReportFormat implements TagReportListener {
     private boolean mIsDebugMode = PropertyUtils.isDebugMode();
+    private HttpClient mHttpClient = HttpClient.getInstance();
 
     private void writeJSONToFile() {
-        // try-with-resources statement based on post comment below :)
         try {
             FileWriter file = new FileWriter(ReaderController.mLogFileName);
-            //ReaderController.mReadWrapper.put("raw", ReaderController.mReadResultRaw);
-            ReaderController.mReadWrapper.put("recordsHashTable", ReaderController.mRecordsHashTable);
-            ReaderController.mReadWrapper.put("slaveEpcStat", ReaderController.mSlaveEpcStat);
-            file.write(ReaderController.mReadWrapper.toString());
+            JSONObject wrapper = new JSONObject();
+            //wrapper.put("raw", ReaderController.mReadResultRaw);
+            wrapper.put("recordsHashTable", ReaderController.mRecordsHashTable);
+            wrapper.put("slaveEpcStat", ReaderController.mSlaveEpcStat);
+            file.write(wrapper.toString());
             file.flush();
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            System.out.println("writeJSONToFile IO error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("writeJSONToFile assembling JSON error: " + e.getMessage());
         }
     }
     private void sendResult() {
         JSONObject txData = new JSONObject();
-        if (ReaderController.mRaceId != null) {
-            txData.put("type", ReaderController.EVENT_TRANSFER_DATA);
-            txData.put("race", ReaderController.mRaceId);
-        } else {
-            txData.put("type", ReaderController.EVENT_TRANSFER_DATA_TESTMODE);
-            txData.put("event", ReaderController.mEventId);
-        }
         JSONObject payload = new JSONObject();
-        payload.put("recordsHashTable", ReaderController.mRecordsHashTable);
-        payload.put("slaveEpcStat", ReaderController.mSlaveEpcStat);
-        txData.put("payload", payload);
-
+        try {
+            if (ReaderController.mRaceId != null) {
+                txData.put("type", "rxdata");
+                txData.put("race", ReaderController.mRaceId);
+            } else {
+                txData.put("type", "rxdatatest");
+                txData.put("event", ReaderController.mEventId);
+            }
+            payload.put("recordsHashTable", ReaderController.mRecordsHashTable);
+            payload.put("slaveEpcStat", ReaderController.mSlaveEpcStat);
+            txData.put("payload", payload);
+        }  catch (Exception e) {
+            System.out.println("sendResult assembling JSON error: " + e.getMessage());
+        }
         Request req = new Request.Builder()
                 .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + ReaderController.mSocketId)
                 .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, txData.toJSONString()))
                 .build();
 
-        ReaderController.mHttpClient.request(req, new Callback() {
+        mHttpClient.request(req, new Callback() {
             public void onFailure(Call call, IOException e) {
                 e.printStackTrace();
                 System.out.println("send tag data fail. Error Message: " + e.getMessage());
@@ -72,55 +78,57 @@ public class ReportFormat implements TagReportListener {
             String epc = readingEpc;
             Boolean isSlaveEpc = false;
             Long ts = PropertyUtils.getTimestamp();
+            // Check if slave epc
             if (ReaderController.mSlaveEpcMap != null && ReaderController.mSlaveEpcMap.get(readingEpc) != null) {
                 epc = ReaderController.mSlaveEpcMap.get(readingEpc).toString();
                 isSlaveEpc = true;
             }
             if (mIsDebugMode) {
                 JSONObject result = new JSONObject();
-                result.put("epc", epc);
-                result.put("timestamp", ts);
-                result.put("isSlave", isSlaveEpc);
-                result.put("antenna", t.getAntennaPortNumber());
-                result.put("doppler", t.getRfDopplerFrequency());
-                result.put("peakRssi", t.getPeakRssiInDbm());
-                result.put("phase angel", t.getPhaseAngleInRadians());
+                try {
+                    result.put("epc", epc);
+                    result.put("timestamp", ts);
+                    result.put("isSlave", isSlaveEpc);
+                    result.put("antenna", t.getAntennaPortNumber());
+                    result.put("doppler", t.getRfDopplerFrequency());
+                    result.put("peakRssi", t.getPeakRssiInDbm());
+                    result.put("phase angel", t.getPhaseAngleInRadians());
+                }  catch (Exception e) {
+                    System.out.println("Assembling debug result error: " + e.getMessage());
+                }
                 System.out.println(result.toString());
             } else {
                 JSONArray hashtableArray = new JSONArray();
                 JSONObject slaveStat = new JSONObject();
-                Boolean isValidRecord = true;
                 Integer lastValueIndex = -1;
+                // Check if entries exist
                 if (ReaderController.mRecordsHashTable.get(epc) != null) {
                     hashtableArray = (JSONArray) ReaderController.mRecordsHashTable.get(epc);
                     lastValueIndex = hashtableArray.size() - 1;
                 }
-                if (lastValueIndex > -1 && (ts - (Long) hashtableArray.get(lastValueIndex) < ReaderController.mValidIntervalMs)) {
-                    isValidRecord = false;
-                }
-                if (isValidRecord) {
-                    hashtableArray.add(ts);
-                    ReaderController.mRecordsHashTable.put(epc, hashtableArray);
-
-                    // print
-                    String print = "Valid - epc: " + readingEpc + ". timestamp: " + ts;
-
-                    // Add slaveEpcStat record
-                    if (isSlaveEpc) {
-                        if (ReaderController.mSlaveEpcStat.get(epc) != null) {
-                            slaveStat = (JSONObject) ReaderController.mSlaveEpcStat.get(epc);
+                // Check if interval valid
+                if (lastValueIndex < 0 || (ts - (Long) hashtableArray.get(lastValueIndex) >= ReaderController.mValidIntervalMs)) {
+                    String print = "Valid epc: " + readingEpc + ". timestamp: " + ts;
+                    try {
+                        hashtableArray.add(ts);
+                        ReaderController.mRecordsHashTable.put(epc, hashtableArray);
+                        // Add slaveEpcStat record
+                        if (isSlaveEpc) {
+                            if (ReaderController.mSlaveEpcStat.get(epc) != null) {
+                                slaveStat = (JSONObject) ReaderController.mSlaveEpcStat.get(epc);
+                            }
+                            lastValueIndex = hashtableArray.size() - 1;
+                            String key = lastValueIndex.toString();
+                            slaveStat.put(key, 1);
+                            ReaderController.mSlaveEpcStat.put(epc, slaveStat);
+                            print += ". isSlaveOf: " + epc;
                         }
-                        lastValueIndex = hashtableArray.size() - 1;
-                        String key = lastValueIndex.toString();
-                        slaveStat.put(key, 1);
-                        ReaderController.mSlaveEpcStat.put(epc, slaveStat);
-                        print += ". isSlaveOf: " + epc;
+                    } catch (Exception e) {
+                        System.out.println("Assembling result error: " + e.getMessage());
                     }
                     System.out.println(print);
-                    // Write result to log file
-                    writeJSONToFile();
-                    // Post result to API
-                    sendResult();
+                    writeJSONToFile(); // Write result to log file
+                    sendResult(); // Post result to API
                 }
             }
         }
