@@ -26,31 +26,24 @@ import java.security.cert.X509Certificate;
 import java.util.Scanner;
 import com.sun.istack.internal.Nullable;
 
-public class ReaderController {
 
-    public static final String EVENT_START_READER = "startreader";
-    public static final String EVENT_TERMINATE_READER = "terminatereader";
-    public static final String EVENT_TRANSFER_DATA = "rxdata";
-    public static final String EVENT_TRANSFER_DATA_TESTMODE = "rxdatatest";
-    public static final String EVENT_GET_READER_STATUS = "getreaderstatus";
-    public static final String EVENT_READER_STATUS = "readerstatus";
-    public static String mEventId;
+public class ReaderController {
+    private static final String EVENT_READER_COMMAND = "readercommand";
+    // Race session-based data, init at startreader, destroy at terminatereader
     public static String mSocketId;
+    public static String mEventId;
     public static String mRaceId;
     public static Long mValidIntervalMs;
     public static JSONObject mSlaveEpcMap;
     public static String mLogFileName;
-    public static JSONObject mReadWrapper;
     public static JSONObject mRecordsHashTable;
     public static JSONObject mSlaveEpcStat;
     //public static JSONArray mReadResultRaw;
-    public static HttpClient mHttpClient;
+    private static HttpClient mHttpClient;
 
     private boolean mIsDebugMode;
-
     private String mReaderHost;
     private String mApiHost;
-    private JSONObject mMsg;
     private ImpinjReader mReader;
     private Socket mSocket;
 
@@ -63,20 +56,14 @@ public class ReaderController {
         public java.security.cert.X509Certificate[] getAcceptedIssuers() {
             return new java.security.cert.X509Certificate[] {};
         }
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException { }
 
-        public void checkClientTrusted(X509Certificate[] chain,
-                                       String authType) throws CertificateException {
-        }
-
-        public void checkServerTrusted(X509Certificate[] chain,
-                                       String authType) throws CertificateException {
-        }
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException { }
     };
     private final TrustManager[] trustAllCerts= new TrustManager[] {mMyX509TrustManager};
     private SSLContext mySSLContext;
 
     JSONParser parser = new JSONParser();
-
 
     ReaderController(@NotNull String readerHost) {
         this.mReaderHost = readerHost;
@@ -85,14 +72,11 @@ public class ReaderController {
     }
 
     public void initialize() {
-        mMsg = new JSONObject();
         mReader = new ImpinjReader();
-        mMsg.put("type", EVENT_READER_STATUS);
         if (mIsDebugMode) {
-            initialReader();
+            initReader();
         } else {
             mHttpClient = HttpClient.getInstance();
-            System.out.println("Try to connect to socket: " + mApiHost);
             try {
                 if (mApiHost.matches("^(https)://.*$")) {
                     mySSLContext = SSLContext.getInstance("TLS");
@@ -103,10 +87,10 @@ public class ReaderController {
                             .sslSocketFactory(mySSLContext.getSocketFactory(), mMyX509TrustManager)
                             .build();
 
-// default settings for all sockets
+                    // default settings for all sockets
                     IO.setDefaultOkHttpWebSocketFactory(okHttpClient);
                     IO.setDefaultOkHttpCallFactory(okHttpClient);
-// set as an option
+                    // set as an option
                     IO.Options opts = new IO.Options();
                     opts.callFactory = okHttpClient;
                     opts.webSocketFactory = okHttpClient;
@@ -114,105 +98,83 @@ public class ReaderController {
                 } else {
                     mSocket = IO.socket(mApiHost);
                 }
-
                 mSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
                     public void call(Object... args) {
                         mSocketId = mSocket.id();
-                        System.out.println("Connected to socket: " + mApiHost + ". socket ID: " + mSocketId);
+                        System.out.println("Connected: " + mApiHost + ". socket ID: " + mSocketId);
 
-                        // join / register id to socket io
-                        postToApi(null);
+                        Request sendMsg = new Request.Builder()
+                                    .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
+                                    .build();
+                        mHttpClient.request(sendMsg, new Callback() {
+                            public void onFailure(Call call, IOException e) {
+                                e.printStackTrace();
+                            }
+                            public void onResponse(Call call, Response response) throws IOException {
+                                System.out.println("Socket.EVENT_CONNECT join chat rooms");
+                                try {
+                                    ResponseBody body = response.body();
+                                    body.close();
+                                } catch (Exception e) {
+                                    System.out.println("Socket.EVENT_CONNECT error: " + e.getMessage());
+                                }
+                                initReader();
+                            }
+                        });
                     }
-                }).on(EVENT_START_READER, new Emitter.Listener() {
+                }).on(EVENT_READER_COMMAND, new Emitter.Listener() {
                     public void call(Object... args) {
-                        System.out.println("start reader");
                         if (null == mReader) {
                             return;
                         }
+                        JSONObject mMsg = new JSONObject();
                         try {
-                            if (!mReader.isConnected()) {
-                                initialReader();
-                            }
-
                             String input = args[0].toString();
                             JSONObject inputJson = (JSONObject) parser.parse(input);
-                            if (inputJson.get("eventId") != null) {
-                                mEventId = inputJson.get("eventId").toString();
-                                mMsg.put("event", mEventId);
+                            String command = inputJson.get("command").toString();
+                            System.out.println("Received command: " + command);
+                            if (command.equals("START")) {
+                                if (!mReader.isConnected()) {
+                                    initReader();
+                                }
+                                mReader.start();
+                                if (inputJson.get("eventId") != null) {
+                                    mEventId = inputJson.get("eventId").toString();
+                                }
+                                if (inputJson.get("raceId") != null) {
+                                    mRaceId = inputJson.get("raceId").toString();
+                                }
+                                if (null == mEventId && null == mRaceId) {
+                                    System.out.println("Please specify eventId or raceId in parameter");
+                                    return;
+                                }
+                                if (inputJson.get("validIntervalMs") != null) {
+                                    mValidIntervalMs = (Long) inputJson.get("validIntervalMs");
+                                } else {
+                                    mValidIntervalMs = PropertyUtils.getDefaultValidIntervalMs();
+                                }
+                                if (inputJson.get("slaveEpcMap") != null) {
+                                    mSlaveEpcMap = (JSONObject) inputJson.get("slaveEpcMap");
+                                } else {
+                                    mSlaveEpcMap = new JSONObject();
+                                }
+                                mRecordsHashTable = new JSONObject();
+                                mSlaveEpcStat = new JSONObject();
+                                //mReadResultRaw = new JSONArray();
+                                mLogFileName = PropertyUtils.getLogFileName();
+                                FileWriter file = new FileWriter(ReaderController.mLogFileName);
+                                file.write("");
+                                file.flush();
                             }
-                            if (inputJson.get("raceId") != null) {
-                                mRaceId = inputJson.get("raceId").toString();
-                                mMsg.put("race", mRaceId);
-                            }
-                            if (null == mEventId && null == mRaceId) {
-                                System.out.println("Please specify eventId or raceId in parameter");
-                                return;
-                            }
-                            mValidIntervalMs = (Long) inputJson.get("validIntervalMs");
-                            mSlaveEpcMap = (JSONObject) inputJson.get("slaveEpcMap");
-                            if (mSlaveEpcMap == null) {
-                                mSlaveEpcMap = new JSONObject();
-                            }
-                            mReadWrapper = new JSONObject();
-                            mRecordsHashTable = new JSONObject();
-                            mSlaveEpcStat = new JSONObject();
-                            //mReadResultRaw = new JSONArray();
-                            mLogFileName = PropertyUtils.getLogFileName();
-                            mReader.start();
-                            mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
-                            System.out.println(mMsg.toJSONString());
-                        } catch (OctaneSdkException ex) {
-                            System.out.println(ex.getMessage());
-                        } catch (Exception ex) {
-                            System.out.println(ex.getMessage());
-                            ex.printStackTrace(System.out);
-                        }
-                        // Initialize an empty log file
-                        try {
-                            FileWriter file = new FileWriter(ReaderController.mLogFileName);
-                            file.write("");
-                            file.flush();
-                        } catch (IOException e) {
-                            System.out.println(e.getMessage());
-                        }
-                        postToApi(mMsg);
-                    }
-
-                }).on(EVENT_GET_READER_STATUS, new Emitter.Listener() {
-                    public void call(Object... args) {
-                        System.out.println("get reader status");
-                        if (null == mReader) {
-                            return;
-                        }
-                        try {
-                            // TODO: send back to api (control panel)
-                            if (mRaceId != null) {
-                                mMsg.put("race", mRaceId);
-                            } else {
-                                mMsg.put("event", mEventId);
-                            }
-                            mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
-                            System.out.println(mMsg.toJSONString());
-                        } catch (OctaneSdkException ex) {
-                            System.out.println(ex.getMessage());
-                        } catch (Exception ex) {
-                            System.out.println(ex.getMessage());
-                            ex.printStackTrace(System.out);
-                        }
-                        postToApi(mMsg);
-
-                    }
-                }).on(EVENT_TERMINATE_READER, new Emitter.Listener() {
-                    public void call(Object... args) {
-                        System.out.println("stop reader");
-                        if (null == mReader) {
-                            return;
-                        }
-
-                        try {
-                            if (mReader.isConnected()) {
+                            if (command.equals("STOP")) {
                                 mReader.stop();
-
+                                mEventId = null;
+                                mRaceId = null;
+                                mValidIntervalMs = null;
+                                mSlaveEpcMap = null;
+                                mRecordsHashTable = null;
+                                mSlaveEpcStat = null;
+                                mLogFileName = null;
                             }
                             if (mRaceId != null) {
                                 mMsg.put("race", mRaceId);
@@ -220,74 +182,58 @@ public class ReaderController {
                             if (mEventId != null) {
                                 mMsg.put("event", mEventId);
                             }
+                            mMsg.put("type", "readerstatus");
                             mMsg.put("payload", ReaderSettings.getReaderInfo(mReader, ReaderSettings.getSettings(mReader)));
-                            System.out.println(mMsg.toJSONString());
-                        } catch (OctaneSdkException ex) {
-                            System.out.println(ex.getMessage());
-                        } catch (Exception ex) {
-                            System.out.println(ex.getMessage());
-                            ex.printStackTrace(System.out);
+                        } catch (OctaneSdkException e) {
+                            System.out.println("readercommand error: " + e.getMessage());
+                        } catch (Exception e) {
+                            System.out.println("readercommand error: " + e.getMessage());
                         }
-                        postToApi(mMsg);
+                        System.out.println("Responding reader status: " + mMsg.toJSONString());
+                        Request sendMsg = new Request.Builder()
+                                    .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
+                                    .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, mMsg.toJSONString()))
+                                    .build();
+                        mHttpClient.request(sendMsg, new Callback() {
+                            public void onFailure(Call call, IOException e) {
+                                e.printStackTrace();
+                            }
+                            public void onResponse(Call call, Response response) throws IOException {
+                                try {
+                                    ResponseBody body = response.body();
+                                    body.close();
+                                } catch (Exception e) {
+                                    System.out.println("Responding error: " + e.getMessage());
+                                }
+                            }
+                        });
                     }
                 }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
-
                     public void call(Object... args) {
-                        System.out.println("socket disconnect");
+                        mSocketId = null;
+                        dischargeReader();
+                        System.out.println("Socket disconnected");
                     }
-
                 });
-
+                System.out.println("Connecting: " + mApiHost);
                 mSocket.connect();
-
             } catch (URISyntaxException e) {
-                System.out.println(e.getMessage());
-                e.printStackTrace(System.out);
-            } catch (NoSuchAlgorithmException E)  {
-
-            } catch (KeyManagementException E) {
-
+                System.out.println("Socket.io error: " + e.getMessage());
+            } catch (NoSuchAlgorithmException e)  {
+                System.out.println("Socket.io error: " + e.getMessage());
+            } catch (KeyManagementException e) {
+                System.out.println("Socket.io error: " + e.getMessage());
             }
         }
-        mMsg.put("message", "Connecting");
     }
-    public void postToApi(@Nullable final JSONObject obj) {
-        Request sendMsg;
-        if (obj == null) {
-            sendMsg = new Request.Builder()
-                    .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
-                    .build();
-        } else {
-            sendMsg = new Request.Builder()
-                    .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
-                    .post(RequestBody.create(HttpClient.MEDIA_TYPE_JSON, obj.toJSONString()))
-                    .build();
-        }
-        mHttpClient.request(sendMsg, new Callback() {
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
-            public void onResponse(Call call, Response response) throws IOException {
-                try {
-                    if (obj == null) {
-                        initialReader();
-                    } else {
-                        ResponseBody body = response.body();
-                        body.close();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-    private void initialReader() {
+    private void initReader() {
         if (null == mReader) {
             System.out.println("reader obj is null: initialReader");
             return;
         }
+        System.out.println("Initializing reader");
         try {
-            checkReaderConnection();
+            dischargeReader();
             mReader.connect(mReaderHost);
             Settings settings = ReaderSettings.getSettings(mReader);
             mReader.setTagReportListener(new ReportFormat());
@@ -299,46 +245,35 @@ public class ReaderController {
                 String line = s.nextLine();
                 System.out.println(line);
                 if (line.equals("START")) {
+                    mValidIntervalMs = PropertyUtils.getDefaultValidIntervalMs();
+                    mRecordsHashTable = new JSONObject();
                     mReader.start();
                 } else if (line.equals("STOP")) {
+                    mValidIntervalMs = null;
+                    mRecordsHashTable = null;
                     mReader.stop();
-                    //break;
                 } else if (line.equals("STATUS")) {
                     ReaderSettings.getReaderInfo(mReader, settings);
                 }
             }
-
-        } catch (OctaneSdkException ex) {
-            System.out.println(ex.getMessage());
-        } catch (Exception ex) {
-            System.out.println(ex.getMessage());
-            ex.printStackTrace(System.out);
+        } catch (OctaneSdkException e) {
+            System.out.println("InitReader error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("InitReader error: " + e.getMessage());
         }
     }
-
-    private void checkReaderConnection() {
+    private void dischargeReader() {
         if (mReader.isConnected()) {
+            System.out.println("Discharging reader");
             try {
                 mReader.removeTagReportListener();
                 mReader.stop();
                 mReader.disconnect();
-
-            } catch (OctaneSdkException ex) {
-                System.out.println(ex.getMessage());
-            } catch (Exception ex) {
-                System.out.println(ex.getMessage());
-                ex.printStackTrace(System.out);
+            } catch (OctaneSdkException e) {
+                System.out.println("dischargeReader error: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("dischargeReader error: " + e.getMessage());
             }
         }
-    }
-
-    private void destory() {
-        mSocket.disconnect();
-        checkReaderConnection();
-        mHttpClient.distory();
-
-        mReader.removeTagReportListener();
-        mSocket = null;
-        mReader = null;
     }
 }
