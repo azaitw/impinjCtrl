@@ -36,20 +36,16 @@ public class ReaderSettings {
         // Race timing recommendation: session 1
         // http://racetiming.wimsey.co/2015/05/rfid-inventory-search-modes.html
         settings.setSearchMode(SearchMode.DualTarget);
-        settings.setSession(1);
         //settings.setSearchMode(SearchMode.SingleTarget);
         //settings.setSearchMode(SearchMode.TagFocus);
+        settings.setSession(1);
         if (debugMode) {
-            //DualTarget
-            // Other report items
             report.setIncludeAntennaPortNumber(true);
             report.setIncludeChannel(true);
             report.setIncludeCrc(true);
-            //report.setIncludeDopplerFrequency(true);
             report.setIncludePeakRssi(true);
             report.setIncludePhaseAngle(true);
         }
-
 
         // set some special settings for antennas
         AntennaConfigGroup antennas = settings.getAntennas();
