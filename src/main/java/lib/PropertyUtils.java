@@ -30,5 +30,5 @@ public class PropertyUtils {
         return System.currentTimeMillis();
     }
 
-    public static Integer getDefaultValidIntervalMs () { return Integer.parseInt(System.getProperty(Properties.validIntervalMs)); }
+    public static Long getDefaultValidIntervalMs () { return Long.parseLong(System.getProperty(Properties.validIntervalMs)); }
 }
