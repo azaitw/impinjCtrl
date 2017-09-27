@@ -1,8 +1,7 @@
 package lib;
 
 import com.impinjCtrl.Properties;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import com.impinjCtrl.ReaderController;
 
 public class PropertyUtils {
 
@@ -13,21 +12,26 @@ public class PropertyUtils {
 
     public static String getLogFileName() {
         String logDir = "./logs/";
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-        String fileName = System.getProperty(Properties.logFileName);
-        return TextUtils.isEmpty(fileName) ? logDir + "beardude" + "-" + timeStamp + ".log"
-                : logDir + fileName + "-" + timeStamp + ".log";
+        String fileName;
+        if (ReaderController.mRaceId != null) {
+            fileName = "race-" + ReaderController.mRaceId;
+        } else {
+            fileName = "event-" + ReaderController.mEventId;
+        }
+        System.out.println("LogFileName: " + fileName);
+        return logDir + fileName + ".json";
     }
 
     public static String getAPiHost() {
         return System.getProperty(Properties.apiHost);
     }
 
-    public static Integer getEventId() {
-        return Integer.parseInt(System.getProperty(Properties.eventId));
-    }
-
     public static Long getTimestamp() {
         return System.currentTimeMillis();
+    }
+
+    public static Long getDefaultValidIntervalMs () {
+        // Default interval: 1000ms
+        return Long.parseLong(System.getProperty(Properties.validIntervalMs, "1000"));
     }
 }
