@@ -41,6 +41,10 @@ public class Logging {
         }
         return fileName;
     }
+    public static void resetLogging() {
+        mLogFileName = null;
+        mReadResult = null;
+    }
     public static void addEntry(JSONObject entry) {
         mReadResult.add(entry);
         System.out.println(entry.toJSONString());

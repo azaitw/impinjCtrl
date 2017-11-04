@@ -41,6 +41,7 @@ public class ReaderController {
                     message = "Reader stopped";
                     mReader.removeTagReportListener();
                     mReader.stop();
+                    Logging.resetLogging();
                 }
             } else if (command.equals("DEBUG") || command.equals("START")) {
                 if (isSingulating) { // Already stopped, return error

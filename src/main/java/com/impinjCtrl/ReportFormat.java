@@ -17,9 +17,9 @@ public class ReportFormat implements TagReportListener {
             try {
                 result.put("epc", t.getEpc().toString().replace(" ", "").toLowerCase());
                 result.put("timestamp", PropertyUtils.getTimestamp());
-                result.put("antenna", t.getAntennaPortNumber());
-                result.put("peakRssi", t.getPeakRssiInDbm());
-                result.put("phase angel", t.getPhaseAngleInRadians());
+                result.put("ant", t.getAntennaPortNumber());
+                result.put("signal", t.getPeakRssiInDbm());
+                result.put("angel", t.getPhaseAngleInRadians());
                 Logging.addEntry(result);
             } catch (Exception e) {
                 System.out.println("onTagReported Exception: " + e.getMessage());
