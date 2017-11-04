@@ -13,12 +13,10 @@ import com.impinj.octane.Settings;
 import com.impinj.octane.Status;
 import java.util.ArrayList;
 import org.json.simple.JSONObject;
-import lib.PropertyUtils;
 
 public class ReaderSettings {
-    public static Settings getSettings (ImpinjReader reader) throws OctaneSdkException {
+    public static Settings getSettings (ImpinjReader reader, Boolean isDebugMode) throws OctaneSdkException {
         Settings settings = reader.queryDefaultSettings();
-        Boolean debugMode = PropertyUtils.isDebugMode();
 
         ReportConfig report = settings.getReport();
         report.setIncludeFirstSeenTime(true);
@@ -35,17 +33,23 @@ public class ReaderSettings {
         // TagFocus uses Singletarget session 1 with fewer reports when in sensor field
         // Race timing recommendation: session 1
         // http://racetiming.wimsey.co/2015/05/rfid-inventory-search-modes.html
-        settings.setSearchMode(SearchMode.DualTarget);
+        //settings.setSearchMode(SearchMode.DualTarget);
         //settings.setSearchMode(SearchMode.SingleTarget);
-        //settings.setSearchMode(SearchMode.TagFocus);
+
+        // Reader de-dup read mode
+        if (isDebugMode) {
+            settings.setSearchMode(SearchMode.DualTarget);
+        } else {
+            settings.setSearchMode(SearchMode.TagFocus);
+        }
         settings.setSession(1);
-        if (debugMode) {
+        //if (ReaderController.mMode == "test") {
             report.setIncludeAntennaPortNumber(true);
             report.setIncludeChannel(true);
             report.setIncludeCrc(true);
             report.setIncludePeakRssi(true);
             report.setIncludePhaseAngle(true);
-        }
+        //}
 
         // set some special settings for antennas
         AntennaConfigGroup antennas = settings.getAntennas();
@@ -61,9 +65,7 @@ public class ReaderSettings {
         return settings;
     }
     public static JSONObject getReaderInfo (ImpinjReader reader, Settings settings) throws OctaneSdkException {
-
         JSONObject result = new JSONObject();
-
         FeatureSet features = reader.queryFeatureSet();
         Status status = reader.queryStatus();
 
@@ -75,7 +77,6 @@ public class ReaderSettings {
         result.put("readerMode", settings.getReaderMode().toString());
         result.put("searchMode", settings.getSearchMode().toString());
         result.put("session", settings.getSession());
-
 
         ArrayList<AntennaConfig> ac = settings.getAntennas().getAntennaConfigs();
 
@@ -91,8 +92,6 @@ public class ReaderSettings {
         }
         result.put("getRxSensitivityinDbm", rxSensitivity);
         result.put("getTxPowerinDbm", txPower);
-
-        System.out.println(result.toJSONString());
         return result;
     }
 }
