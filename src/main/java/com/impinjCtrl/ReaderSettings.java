@@ -30,33 +30,27 @@ public class ReaderSettings {
         //Search mode determines how reader change tags' state, or how frequent a tag is reported when in sensor field
         // https://support.impinj.com/hc/en-us/articles/202756158-Understanding-EPC-Gen2-Search-Modes-and-Sessions
         // https://support.impinj.com/hc/en-us/articles/202756368-Optimizing-Tag-Throughput-Using-ReaderMode
-        // TagFocus uses Singletarget session 1 with fewer reports when in sensor field
+        // TagFocus uses Singletarget session 1 with fewer reports when in sensor field (Auto de-dup)
         // Race timing recommendation: session 1
         // http://racetiming.wimsey.co/2015/05/rfid-inventory-search-modes.html
-        //settings.setSearchMode(SearchMode.DualTarget);
         //settings.setSearchMode(SearchMode.SingleTarget);
-
-        // Reader de-dup read mode
         if (isDebugMode) {
             settings.setSearchMode(SearchMode.DualTarget);
         } else {
             settings.setSearchMode(SearchMode.TagFocus);
         }
         settings.setSession(1);
-        //if (ReaderController.mMode == "test") {
-            report.setIncludeAntennaPortNumber(true);
-            report.setIncludeChannel(true);
-            report.setIncludeCrc(true);
-            report.setIncludePeakRssi(true);
-            report.setIncludePhaseAngle(true);
-        //}
+        report.setIncludeAntennaPortNumber(true);
+        report.setIncludeChannel(true);
+        report.setIncludeCrc(true);
+        report.setIncludePeakRssi(true);
+        report.setIncludePhaseAngle(true);
 
         // set some special settings for antennas
         AntennaConfigGroup antennas = settings.getAntennas();
         antennas.disableAll();
 
         for (short i = 1; i <= 4; i++) {
-            //antennas.enableById(new short[]{i});
             // Define reader range
             antennas.getAntenna(i).setIsMaxRxSensitivity(true);
             antennas.getAntenna(i).setIsMaxTxPower(true);
@@ -79,19 +73,12 @@ public class ReaderSettings {
         result.put("session", settings.getSession());
 
         ArrayList<AntennaConfig> ac = settings.getAntennas().getAntennaConfigs();
-
-        Boolean isMaxRxSensitivity = ac.get(0).getIsMaxRxSensitivity();
-        Boolean isMaxTxPower = ac.get(0).getIsMaxTxPower();
-        String rxSensitivity = "max";
-        String txPower = "max";
-        if (!isMaxRxSensitivity) {
-            rxSensitivity = String.valueOf(ac.get(0).getRxSensitivityinDbm()) + "Dbm";
-        }
-        if (!isMaxTxPower) {
-            txPower = String.valueOf(ac.get(0).getTxPowerinDbm()) + "Dbm";
-        }
-        result.put("getRxSensitivityinDbm", rxSensitivity);
-        result.put("getTxPowerinDbm", txPower);
+        String rxSensitivity = String.valueOf(ac.get(0).getRxSensitivityinDbm()) + "Dbm";
+        String txPower = String.valueOf(ac.get(0).getTxPowerinDbm()) + "Dbm";
+        if (ac.get(0).getIsMaxRxSensitivity()) { rxSensitivity += " (max)"; }
+        if (ac.get(0).getIsMaxTxPower()) { txPower += " (max)"; }
+        result.put("rxSensitivity", rxSensitivity);
+        result.put("txPower", txPower);
         return result;
     }
 }
