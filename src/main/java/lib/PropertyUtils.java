@@ -1,37 +1,15 @@
 package lib;
 
 import com.impinjCtrl.Properties;
-import com.impinjCtrl.ReaderController;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class PropertyUtils {
-
-    public static boolean isDebugMode() {
-        String debugMode = System.getProperty(Properties.debugMode, "0");
-        return debugMode.equals("1");
-    }
-
-    public static String getLogFileName() {
-        String logDir = "./logs/";
-        String fileName;
-        if (ReaderController.mRaceId != null) {
-            fileName = "race-" + ReaderController.mRaceId;
-        } else {
-            fileName = "event-" + ReaderController.mEventId;
-        }
-        System.out.println("LogFileName: " + fileName);
-        return logDir + fileName + ".json";
-    }
-
-    public static String getAPiHost() {
-        return System.getProperty(Properties.apiHost);
-    }
-
+    public static String getLogFileName() { return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()) + ".json"; }
+    public static String getAPiHost() { return System.getProperty(Properties.apiHost); }
+    public static String getReaderHost() { return System.getProperty(Properties.readerHost); }
+    public static String getLogPath() { return System.getProperty(Properties.logPath, "./log/"); }
     public static Long getTimestamp() {
         return System.currentTimeMillis();
-    }
-
-    public static Long getDefaultValidIntervalMs () {
-        // Default interval: 1000ms
-        return Long.parseLong(System.getProperty(Properties.validIntervalMs, "1000"));
     }
 }
