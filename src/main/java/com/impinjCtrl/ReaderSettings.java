@@ -14,47 +14,34 @@ import com.impinj.octane.Status;
 import java.util.ArrayList;
 import org.json.simple.JSONObject;
 
+/*
+    Search mode determines how reader change tags' state, or how frequent a tag is reported when in sensor field
+    https://support.impinj.com/hc/en-us/articles/202756158-Understanding-EPC-Gen2-Search-Modes-and-Sessions
+    https://support.impinj.com/hc/en-us/articles/202756368-Optimizing-Tag-Throughput-Using-ReaderMode
+    TagFocus uses Singletarget session 1 with fewer reports when in sensor field (Auto de-dup)
+    Race timing recommendation: session 1
+    http://racetiming.wimsey.co/2015/05/rfid-inventory-search-modes.html
+    settings.setSearchMode(SearchMode.SingleTarget);
+*/
 public class ReaderSettings {
     public static Settings getSettings (ImpinjReader reader, Boolean isDebugMode) throws OctaneSdkException {
         Settings settings = reader.queryDefaultSettings();
-
         ReportConfig report = settings.getReport();
-        report.setIncludeFirstSeenTime(true);
-        report.setMode(ReportMode.Individual);
-        // The reader can be set into various modes in which reader
-        // dynamics are optimized for specific regions and environments.
-        // The following mode, AutoSetDenseReader, monitors RF noise and interference and then automatically
-        // and continuously optimizes the reader’s configuration
-        settings.setReaderMode(ReaderMode.AutoSetDenseReader);
+        AntennaConfigGroup antennas = settings.getAntennas();
 
-        //Search mode determines how reader change tags' state, or how frequent a tag is reported when in sensor field
-        // https://support.impinj.com/hc/en-us/articles/202756158-Understanding-EPC-Gen2-Search-Modes-and-Sessions
-        // https://support.impinj.com/hc/en-us/articles/202756368-Optimizing-Tag-Throughput-Using-ReaderMode
-        // TagFocus uses Singletarget session 1 with fewer reports when in sensor field (Auto de-dup)
-        // Race timing recommendation: session 1
-        // http://racetiming.wimsey.co/2015/05/rfid-inventory-search-modes.html
-        //settings.setSearchMode(SearchMode.SingleTarget);
+        settings.setReaderMode(ReaderMode.AutoSetDenseReader);
+        settings.setSession(1);
         if (isDebugMode) {
             settings.setSearchMode(SearchMode.DualTarget);
         } else {
             settings.setSearchMode(SearchMode.TagFocus);
         }
-        settings.setSession(1);
+        report.setMode(ReportMode.Individual);
         report.setIncludeAntennaPortNumber(true);
         report.setIncludeChannel(true);
-        report.setIncludeCrc(true);
         report.setIncludePeakRssi(true);
         report.setIncludePhaseAngle(true);
-
-        // set some special settings for antennas
-        AntennaConfigGroup antennas = settings.getAntennas();
         antennas.disableAll();
-
-        for (short i = 1; i <= 4; i++) {
-            // Define reader range
-            antennas.getAntenna(i).setIsMaxRxSensitivity(true);
-            antennas.getAntenna(i).setIsMaxTxPower(true);
-        }
         antennas.enableAll();
         return settings;
     }
