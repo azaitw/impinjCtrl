@@ -10,6 +10,8 @@ import java.io.IOException;
 public class Logging {
     private static String mLogFileName;
     private static JSONArray mReadResult;
+    private static String mEventId;
+    private static String mRaceId;
 
     // Create log folder if not available
     public static void initLogPath() {
@@ -27,7 +29,7 @@ public class Logging {
         }
     }
     // Create log file and empty json array for a session
-    public static String initLogging() {
+    public static String initLogging(String eventId, String raceId) {
         String fileName = PropertyUtils.getLogFileName();
         mLogFileName = PropertyUtils.getLogPath() + fileName;
         mReadResult = new JSONArray();
@@ -44,12 +46,14 @@ public class Logging {
     public static void resetLogging() {
         mLogFileName = null;
         mReadResult = null;
+        mEventId = null;
+        mRaceId = null;
     }
     public static void addEntry(JSONObject entry) {
         mReadResult.add(entry);
         System.out.println(entry.toJSONString());
         Logging.writeJSONToFile(); // Write result to log file
-        Api.sendResult(entry);
+        Api.sendResult(entry, mEventId, mRaceId);
     }
     // Write to log file
     private static void writeJSONToFile() {

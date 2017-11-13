@@ -26,10 +26,12 @@ public class Api {
     public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     public static void request (Request request, Callback cb) { mHttpClient.newCall(request).enqueue(cb); }
     // Send reading entry to API server
-    public static void sendResult(JSONObject result) {
+    public static void sendResult(JSONObject result, String eventId, String raceId) {
         if (mSocketId != null) {
             JSONObject txData = new JSONObject();
             try {
+                result.put("event", eventId);
+                result.put("race", raceId);
                 txData.put("type", "rxdata");
                 txData.put("payload", result);
             } catch (Exception e) {
@@ -115,7 +117,9 @@ public class Api {
                         String input = args[0].toString();
                         JSONObject inputJson = (JSONObject) parser.parse(input);
                         String command = inputJson.get("command").toString();
-                        mMsg = ReaderController.controlReader(command);
+                        String eventId = inputJson.get("event").toString();
+                        String raceId = inputJson.get("race").toString();
+                        mMsg = ReaderController.controlReader(command, eventId, raceId);
                     } catch (Exception e) {
                         System.out.println("readercommand error: " + e.getMessage());
                     }
