@@ -12,6 +12,7 @@ public class Logging {
     private static JSONArray mReadResult;
     private static String mEventId;
     private static String mRaceId;
+    private static String mMode;
 
     // Create log folder if not available
     public static void initLogPath() {
@@ -33,6 +34,13 @@ public class Logging {
         String fileName = PropertyUtils.getLogFileName();
         mLogFileName = PropertyUtils.getLogPath() + fileName;
         mReadResult = new JSONArray();
+        mEventId = eventId;
+        mRaceId = raceId;
+        if (mRaceId == "") {
+            mMode = "test";
+        } else {
+            mMode = "race";
+        }
         try {
             File file = new File (mLogFileName);
             FileWriter fw = new FileWriter(file);
@@ -48,11 +56,13 @@ public class Logging {
         mReadResult = null;
         mEventId = null;
         mRaceId = null;
+        mMode = null;
     }
     public static void addEntry(JSONObject entry) {
         JSONArray output = new JSONArray();
         entry.put("event", mEventId);
         entry.put("race", mRaceId);
+        entry.put("mode", mMode);
         output.add(entry);
         mReadResult.add(entry);
         System.out.println(entry.toJSONString());
