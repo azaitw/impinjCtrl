@@ -12,7 +12,6 @@ public class ReaderController {
     private static ImpinjReader mReader;
     // Init command when executing this app
     public void initialize() {
-        Logging.initLogPath();
         mReader = new ImpinjReader();
         try {
             mReader.connect(PropertyUtils.getReaderHost());
@@ -40,6 +39,7 @@ public class ReaderController {
                 } else {
                     message = "Reader stopped";
                     mReader.removeTagReportListener();
+                    mReader.deleteAllOpSequences();
                     mReader.stop();
                     Logging.resetLogging();
                 }
@@ -52,6 +52,16 @@ public class ReaderController {
                         message = "Starting reader (debug mode)";
                         result.put("debugMode", true);
                         isDebugMode = true;
+
+                        new java.util.Timer().schedule(
+                                new java.util.TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        ReaderController.controlReader("STOP");
+                                    }
+                                },
+                                5000
+                        );
                     } else {
                         message = "Starting reader";
                     }
