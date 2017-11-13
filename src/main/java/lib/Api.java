@@ -5,6 +5,7 @@ import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 import okhttp3.*;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import javax.net.ssl.*;
@@ -26,14 +27,16 @@ public class Api {
     public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     public static void request (Request request, Callback cb) { mHttpClient.newCall(request).enqueue(cb); }
     // Send reading entry to API server
-    public static void sendResult(JSONObject result, String eventId, String raceId) {
+    // output: { type: 'rxdata', payload: {event: STR, race: STR, records: ARRAY, recordType: STR} }
+    public static void sendResult(JSONArray result, String recordType) {
         if (mSocketId != null) {
             JSONObject txData = new JSONObject();
+            JSONObject payload = new JSONObject();
             try {
-                result.put("event", eventId);
-                result.put("race", raceId);
+                payload.put("records", result);
+                payload.put("recordType", recordType);
                 txData.put("type", "rxdata");
-                txData.put("payload", result);
+                txData.put("payload", payload);
             } catch (Exception e) {
                 System.out.println("sendResult JSON error: " + e.getMessage());
             }
