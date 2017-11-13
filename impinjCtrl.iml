@@ -18,6 +18,6 @@
     <orderEntry type="library" name="Maven: io.socket:socket.io-client:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: io.socket:engine.io-client:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.json:json:20090211" level="project" />
-    <orderEntry type="library" name="OctaneSDKJava-1.28.0.1" level="project" />
+    <orderEntry type="library" name="OctaneSDKJava-1.28.0.1-jar-with-dependencies" level="project" />
   </component>
 </module>
