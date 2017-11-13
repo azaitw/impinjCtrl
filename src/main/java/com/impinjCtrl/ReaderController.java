@@ -12,11 +12,10 @@ public class ReaderController {
     private static ImpinjReader mReader;
     // Init command when executing this app
     public void initialize() {
-        Logging.initLogPath();
         mReader = new ImpinjReader();
         try {
             mReader.connect(PropertyUtils.getReaderHost());
-            controlReader("STOP"); // Reader continutes singulating even when JAVA app stops. resets reader at init.
+            controlReader("STOP", "", ""); // Reader continutes singulating even when JAVA app stops. resets reader at init.
             System.out.println("Connected to reader");
         } catch (OctaneSdkException e) {
             System.out.println("mReader.connect OctaneSdkException: " + e.getMessage());
@@ -26,7 +25,7 @@ public class ReaderController {
     }
     // control readers' start, stop, debug etc, and returns JSON result
     // Output: { type: "readerstatus", message: STR, payload: OBJ, error: BOOL, debugMode: BOOL, logFile: STR }
-    public static JSONObject controlReader(String command) {
+    public static JSONObject controlReader(String command, String eventId, String raceId) {
         JSONObject result = new JSONObject();
         String message = "";
         Boolean isDebugMode = false;
@@ -40,6 +39,7 @@ public class ReaderController {
                 } else {
                     message = "Reader stopped";
                     mReader.removeTagReportListener();
+                    mReader.deleteAllOpSequences();
                     mReader.stop();
                     Logging.resetLogging();
                 }
@@ -52,10 +52,20 @@ public class ReaderController {
                         message = "Starting reader (debug mode)";
                         result.put("debugMode", true);
                         isDebugMode = true;
+
+                        new java.util.Timer().schedule(
+                                new java.util.TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        ReaderController.controlReader("STOP", "", "");
+                                    }
+                                },
+                                5000
+                        );
                     } else {
                         message = "Starting reader";
                     }
-                    result.put("logFile", Logging.initLogging());
+                    result.put("logFile", Logging.initLogging(eventId, raceId));
                     mReader.setTagReportListener(new ReportFormat());
                     mReader.applySettings(ReaderSettings.getSettings(mReader, isDebugMode));
                     mReader.start();
@@ -79,6 +89,6 @@ public class ReaderController {
     private void initTerminalInterface() {
         System.out.println("Commands: START || DEBUG || STOP || STATUS");
         Scanner s = new Scanner(System.in);
-        while (s.hasNextLine()) { controlReader(s.nextLine()); }
+        while (s.hasNextLine()) { controlReader(s.nextLine(), "", ""); }
     }
 }
