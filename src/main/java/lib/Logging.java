@@ -50,10 +50,14 @@ public class Logging {
         mRaceId = null;
     }
     public static void addEntry(JSONObject entry) {
+        JSONArray output = new JSONArray();
+        entry.put("event", mEventId);
+        entry.put("race", mRaceId);
+        output.add(entry);
         mReadResult.add(entry);
         System.out.println(entry.toJSONString());
         Logging.writeJSONToFile(); // Write result to log file
-        Api.sendResult(entry, mEventId, mRaceId);
+        Api.sendResult(output,"partial");
     }
     // Write to log file
     private static void writeJSONToFile() {
