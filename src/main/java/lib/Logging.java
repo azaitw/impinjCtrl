@@ -1,21 +1,31 @@
 package lib;
 
 import com.impinjCtrl.ReaderController;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.io.IOException;
 
 public class Logging {
-    private static String mLogFileName;
-    private static JSONArray mReadResult;
-    private static String mEventId;
-    private static String mRaceId;
-    private static String mMode;
+    public static Logging instance;
+    private FileWriter fileWriter;
+    private BufferedWriter bufferedWriter;
+    private PrintWriter printerWriter;
+    private Integer entryCounter = 0;
+
+    public static Logging getInstance() {
+        if (instance == null) { instance = new Logging(); }
+        return instance;
+    }
+    private Integer getEntryCounter () { return entryCounter; }
+    private void setEntryCounter(Integer entryCounter) { this.entryCounter = entryCounter; }
 
     // Create log folder if not available
-    public static void initLogPath() {
+    public static void createLogFolderIfUnavailable() {
         String logPathString = PropertyUtils.getLogPath();
         File logPath = new File(logPathString);
         if (logPath.exists()) {
@@ -30,55 +40,45 @@ public class Logging {
         }
     }
     // Create log file and empty json array for a session
-    public static String initLogging(String eventId, String raceId) {
-        String fileName = PropertyUtils.getLogFileName();
-        mLogFileName = PropertyUtils.getLogPath() + fileName;
-        mReadResult = new JSONArray();
-        mEventId = eventId;
-        mRaceId = raceId;
-        if (mRaceId == "") {
-            mMode = "test";
-        } else {
-            mMode = "race";
-        }
+    public String initialize() {
+        String fileNameWithPath = PropertyUtils.getLogPath() + PropertyUtils.getLogFileName();
         try {
-            File file = new File (mLogFileName);
-            FileWriter fw = new FileWriter(file);
-            fw.write("");
-            fw.flush();
+            fileWriter = new FileWriter(fileNameWithPath, true);
+            bufferedWriter = new BufferedWriter(fileWriter);
+            printerWriter = new PrintWriter(bufferedWriter);
+            setEntryCounter(0);
         } catch (Exception e) {
             System.out.println("startReader Exception: " + e.getMessage());
         }
-        return fileName;
+        return fileNameWithPath;
     }
-    public static void resetLogging() {
-        mLogFileName = null;
-        mReadResult = null;
-        mEventId = null;
-        mRaceId = null;
-        mMode = null;
-    }
-    public static void addEntry(JSONObject entry) {
-        JSONArray output = new JSONArray();
-        entry.put("event", mEventId);
-        entry.put("race", mRaceId);
-        entry.put("mode", mMode);
-        output.add(entry);
-        mReadResult.add(entry);
-        System.out.println(entry.toJSONString());
-        Logging.writeJSONToFile(); // Write result to log file
-        Api.sendResult(output,"partial");
-    }
-    // Write to log file
-    private static void writeJSONToFile() {
+    public void addEntry (String entryInJsonString) {
+        String content = "";
+        Integer counter = getEntryCounter();
+        if (counter > 0) {
+            content += ",";
+        }
+        content += entryInJsonString;
+        counter += 1;
+        setEntryCounter(counter);
+        printerWriter.print(entryInJsonString);
         try {
-            FileWriter file = new FileWriter(mLogFileName);
-            file.write(mReadResult.toString());
-            file.flush();
+            bufferedWriter.write(content);
         } catch (IOException e) {
             System.out.println("writeJSONToFile IOException: " + e.getMessage());
-        } catch (Exception e) {
-            System.out.println("writeJSONToFile Exception: " + e.getMessage());
         }
+    }
+    public void finish () {
+        try {
+            bufferedWriter.flush();
+            bufferedWriter.close();
+            printerWriter.flush();
+            printerWriter.close();
+        } catch (Exception e) {
+            System.out.println("finish: " + e.getMessage());
+        }
+        printerWriter = null;
+        bufferedWriter = null;
+        fileWriter = null;
     }
 }
