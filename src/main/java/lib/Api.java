@@ -104,16 +104,13 @@ public class Api {
                     Request sendMsg = new Request.Builder().url(mApiHost + "/api/socket/impinj?sid=" + mSocketId).build();
                     request(sendMsg, new Callback() {
                         public void onFailure(Call call, IOException e) {
+                            System.out.println("Socket.EVENT_CONNECT error: " + e.getMessage());
                             e.printStackTrace();
                         }
                         public void onResponse(Call call, Response response) throws IOException {
-                            try {
-                                ResponseBody body = response.body();
-                                System.out.println(response.body());
-                                body.close();
-                            } catch (Exception e) {
-                                System.out.println("Socket.EVENT_CONNECT error: " + e.getMessage());
-                            }
+                            ResponseBody body = response.body();
+                            System.out.println(response.body());
+                            body.close();
                         }
                     });
                 }
@@ -151,15 +148,12 @@ public class Api {
 
                     request(sendMsg, new Callback() {
                         public void onFailure(Call call, IOException e) {
+                            System.out.println("Responding error: " + e.getMessage());
                             e.printStackTrace();
                         }
                         public void onResponse(Call call, Response response) throws IOException {
-                            try {
-                                ResponseBody body = response.body();
-                                body.close();
-                            } catch (Exception e) {
-                                System.out.println("Responding error: " + e.getMessage());
-                            }
+                            ResponseBody body = response.body();
+                            body.close();
                         }
                     });
                 }
