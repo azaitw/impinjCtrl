@@ -12,7 +12,8 @@ import com.impinj.octane.SearchMode;
 import com.impinj.octane.Settings;
 import com.impinj.octane.Status;
 import java.util.ArrayList;
-import org.json.simple.JSONObject;
+
+import model.ReaderInfo;
 
 /*
     Search mode determines how reader change tags' state, or how frequent a tag is reported when in sensor field
@@ -45,27 +46,28 @@ public class ReaderSettings {
         antennas.enableAll();
         return settings;
     }
-    public static JSONObject getReaderInfo (ImpinjReader reader, Settings settings) throws OctaneSdkException {
-        JSONObject result = new JSONObject();
+    public static ReaderInfo getReaderInfo (ImpinjReader reader, Settings settings) throws OctaneSdkException {
+        ReaderInfo rf = new ReaderInfo();
         FeatureSet features = reader.queryFeatureSet();
         Status status = reader.queryStatus();
 
-        result.put("modelName", features.getModelName());
-        result.put("modelNumber", features.getModelNumber());
-        result.put("antennaCount", features.getAntennaCount());
-        result.put("isSingulating", status.getIsSingulating());
-        result.put("temperature", status.getTemperatureCelsius());
-        result.put("readerMode", settings.getReaderMode().toString());
-        result.put("searchMode", settings.getSearchMode().toString());
-        result.put("session", settings.getSession());
+        rf.setModelName(features.getModelName());
+        rf.setModelNumber(features.getModelNumber());
+        rf.setAntennaCount(features.getAntennaCount());
+        rf.setSingulating(status.getIsSingulating());
+        rf.setTemperature(status.getTemperatureCelsius());
+        rf.setReaderMode(settings.getReaderMode().toString());
+        rf.setSearchMode(settings.getSearchMode().toString());
+        rf.setSession(settings.getSession());
 
         ArrayList<AntennaConfig> ac = settings.getAntennas().getAntennaConfigs();
         String rxSensitivity = String.valueOf(ac.get(0).getRxSensitivityinDbm()) + "Dbm";
         String txPower = String.valueOf(ac.get(0).getTxPowerinDbm()) + "Dbm";
         if (ac.get(0).getIsMaxRxSensitivity()) { rxSensitivity += " (max)"; }
         if (ac.get(0).getIsMaxTxPower()) { txPower += " (max)"; }
-        result.put("rxSensitivity", rxSensitivity);
-        result.put("txPower", txPower);
-        return result;
+
+        rf.setRxSensitivity(rxSensitivity);
+        rf.setTxPower(txPower);
+        return rf;
     }
 }
