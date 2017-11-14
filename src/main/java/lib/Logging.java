@@ -1,21 +1,30 @@
 package lib;
 
-import com.impinjCtrl.ReaderController;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import model.RaceResult;
+import model.Record;
+import model.TxData;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 
 public class Logging {
-    private static String mLogFileName;
-    private static JSONArray mReadResult;
+    private static Logging instance;
+
+    private String mLogFileName;
     private static String mEventId;
     private static String mRaceId;
     private static String mMode;
 
+    private Api mApi;
+
+    public static synchronized Logging getInstance() {
+        if (instance == null) {
+            instance = new Logging();
+        }
+        return instance;
+    }
+
     // Create log folder if not available
-    public static void initLogPath() {
+    public void initLogPath() {
         String logPathString = PropertyUtils.getLogPath();
         File logPath = new File(logPathString);
         if (logPath.exists()) {
@@ -28,14 +37,18 @@ public class Logging {
                 System.out.println("Log path creation error");
             }
         }
+
+        // get Api instance
+        mApi = Api.getInstance();
     }
     // Create log file and empty json array for a session
-    public static String initLogging(String eventId, String raceId) {
-        String fileName = PropertyUtils.getLogFileName();
-        mLogFileName = PropertyUtils.getLogPath() + fileName;
-        mReadResult = new JSONArray();
+    public String initLogging(String eventId, String raceId) {
         mEventId = eventId;
         mRaceId = raceId;
+
+        String fileName = PropertyUtils.getLogFileName();
+        mLogFileName = PropertyUtils.getLogPath() + fileName;
+
         if (mRaceId == "") {
             mMode = "test";
         } else {
@@ -51,26 +64,32 @@ public class Logging {
         }
         return fileName;
     }
-    public static void resetLogging() {
+
+    public void resetLogging() {
         mLogFileName = null;
-        mReadResult = null;
         mEventId = null;
         mRaceId = null;
         mMode = null;
     }
-    public static void addEntry(JSONObject entry) {
-        JSONArray output = new JSONArray();
-        entry.put("event", mEventId);
-        entry.put("race", mRaceId);
-        entry.put("mode", mMode);
-        output.add(entry);
-        mReadResult.add(entry);
-        System.out.println(entry.toJSONString());
-        Logging.writeJSONToFile(); // Write result to log file
-        Api.sendResult(output,"partial");
+
+    public void addEntry(Record record) {
+        RaceResult raceResult = new RaceResult(mEventId, mRaceId);
+        TxData payload = new TxData();
+
+        payload.setMode(mMode);
+        payload.addRecords(record);
+        payload.setType("rxdata");
+        payload.setRecordType("partial");
+
+        raceResult.setPayload(payload);
+
+        writeJSONToFile(); // Write result to log file
+        mApi.sendResult(raceResult);
     }
     // Write to log file
-    private static void writeJSONToFile() {
+    private void writeJSONToFile() {
+        // TODO: refine this
+        /*
         try {
             FileWriter file = new FileWriter(mLogFileName);
             file.write(mReadResult.toString());
@@ -80,5 +99,6 @@ public class Logging {
         } catch (Exception e) {
             System.out.println("writeJSONToFile Exception: " + e.getMessage());
         }
+        */
     }
 }
