@@ -15,10 +15,10 @@ public class ReportFormat implements TagReportListener {
         for (Tag t : tags) {
             Record record = new Record();
             record.setEpc(t.getEpc().toString().replace(" ", "").toLowerCase());
-            record.setTimestamp(PropertyUtils.getTimestamp());
+            record.setTime(PropertyUtils.getTimestamp());
             record.setAnt(t.getAntennaPortNumber());
             record.setSignal(t.getPeakRssiInDbm());
-            record.setAngle(t.getPhaseAngleInRadians());
+            //record.setAngle(t.getPhaseAngleInRadians());
             Logging.getInstance().addEntry(record);
         }
     }
