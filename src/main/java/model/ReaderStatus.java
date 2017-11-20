@@ -14,6 +14,7 @@ public class ReaderStatus {
     public void setMessage(String message) { this.payload.setMessage(message); }
     public void setError(Boolean error) { this.payload.setError(error); }
     public void setIsSingulating(Boolean isSingulating) { this.payload.setIsSingulating(isSingulating); }
+    public void setRaceId(String raceId) { this.payload.raceId = raceId; }
     public void setStartTime(Long startTime) { this.payload.setStartTime(startTime); }
     public void setEndTime(Long endTime) { this.payload.setEndTime(endTime); }
     public void setDebugMode(Boolean debugMode) { this.payload.setDebugMode(debugMode); }
@@ -23,6 +24,7 @@ public class ReaderStatus {
         private String message;
         private Boolean error;
         private Boolean isSingulating;
+        private String raceId;
         private Long startTime;
         private Long endTime;
         private Boolean debugMode;
@@ -31,6 +33,7 @@ public class ReaderStatus {
         public void setMessage (String message) { this.message = message; }
         public void setError(Boolean error) { this.error = error; }
         public void setIsSingulating(Boolean isSingulating) { this.isSingulating = isSingulating; }
+        public void setRaceId(String raceId) { this.raceId = raceId; }
         public void setStartTime(Long startTime) { this.startTime = startTime; }
         public void setEndTime(Long endTime) { this.endTime = endTime; }
         public void setDebugMode(Boolean debugMode) { this.debugMode = debugMode; }

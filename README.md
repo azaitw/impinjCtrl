@@ -35,6 +35,7 @@ Response when receiving command:
     "message": "reader command message",
     "error": true || false,
     "isSingulating": true || false,
+    "raceId": "race-id",
     "startTime": timestamp-long,  // returns only on START command
     "endTime": timestamp-long,  // returns only on STOP command
     "logFile": "logfile-path"

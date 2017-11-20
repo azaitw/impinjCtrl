@@ -69,9 +69,11 @@ public class ReaderController {
                     hasError = true;
                 } else {
                     message = "Reader stopped";
-
                     Logging.getInstance().stop(eventId, raceId, rs.getStartTime());
                     rs.setEndTime(PropertyUtils.getTimestamp());
+                    if (raceId != "") {
+                        rs.setRaceId(raceId);
+                    }
                     resetTimer();
                     mReader.removeTagReportListener();
                     mReader.deleteAllOpSequences();
@@ -97,6 +99,9 @@ public class ReaderController {
                         }, 5000);
                     } else {
                         message = "Starting reader";
+                        if (raceId != "") {
+                            rs.setRaceId(raceId);
+                        }
                     }
                     mReader.setTagReportListener(new ReportFormat());
                     mReader.applySettings(getSettings(mReader, isDebugMode));
