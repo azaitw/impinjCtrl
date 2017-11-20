@@ -69,8 +69,8 @@ public class ReaderController {
                     hasError = true;
                 } else {
                     message = "Reader stopped";
-                    Logging.getInstance().stop(eventId, raceId, rs.getStartTime());
                     rs.setEndTime(PropertyUtils.getTimestamp());
+                    Logging.getInstance().stop(eventId, raceId, rs.getEndTime());
                     if (raceId != "") {
                         rs.setRaceId(raceId);
                     }

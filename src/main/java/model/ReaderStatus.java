@@ -10,6 +10,7 @@ public class ReaderStatus {
     }
     public Boolean getIsDebugMode() { return this.payload.debugMode; }
     public Long getStartTime() { return this.payload.startTime; }
+    public Long getEndTime() { return this.payload.endTime; }
 
     public void setMessage(String message) { this.payload.setMessage(message); }
     public void setError(Boolean error) { this.payload.setError(error); }
