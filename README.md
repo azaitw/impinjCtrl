@@ -1,19 +1,82 @@
 # ImpinjCtrl
 
+Control Impinj Speedway R420 through Octane SDK, using command prompt or socket.io requests
 
-使用Impinj Octane SDK，控制 Impinj Speedway R420 的開始與結束讀卡。
-
-執行
+Launch
 ===================
 java -DapiHost=http://APIHOST:PORT -DreaderHost=IMPINJ_IP -jar dist/impinjCtrl.jar
 
-其他選填選項：
--DlogPath=PATH 指定log file路徑
+Optional parameter:
+-DlogPath=PATH      Specify log path (e.g. Using USB thumb drive)
 
-指令
+Commands
 ===================
-連上Reader之後，直接輸入下列指令：
-START   啟動讀卡機
-DEBUG   啟用讀卡機Debug模式  (dualTarget)
-STOP    停止讀卡機
-STATUS  回傳Reader狀態
+When started and connected to reader, use these commands in command prompt:
+
+START   Start singulating
+DEBUG   Start singulating in debug mode (with searchMode: dualTarget) to validate read performance
+STOP    Stop singulating
+STATUS  Return reader status
+
+Socket.io input
+===================
+{
+  "command": "START" || "STOP" || "STATUS",
+  "eventId": "event-id", // Custom parameter
+  "raceId": "race-id", // Custom parameter
+}
+
+Output
+===================
+Response when receiving command:
+{
+  "type": "readerstatus",
+  "payload": {
+    "message": "reader command message",
+    "error": true || false,
+    "isSingulating": true || false,
+    "startTime": timestamp-long,  // returns only on START command
+    "endTime": timestamp-long,  // returns only on STOP command
+    "logFile": "logfile-path"
+  }
+}
+
+Tag report - race:
+{
+  "type": "txdata",
+  "payload": {
+    "raceId": "race-id",
+    "records": [
+      {"epc": "epc-string", time: timestamp-long}
+    ]
+  }
+}
+Tag report - test:
+{
+  "type": "txdata_test",
+  "payload": {
+    "eventId": "event-id",
+    "records": [
+      {"epc": "epc-string", time: timestamp-long}
+    ]
+  }
+}
+
+Log
+===================
+
+
+
+
+Tag report - complete: (Not yet implemented)
+{
+  "type": "txdata_complete",
+  "payload": {
+    "raceId": "race-id",
+    "startTime": timestamp-long,
+    "endTime": timestamp-long
+    "records": [
+      {"epc": "epc-string", time: timestamp-long}
+    ]
+  }
+}
