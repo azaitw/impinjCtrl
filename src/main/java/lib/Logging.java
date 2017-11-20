@@ -1,19 +1,24 @@
 package lib;
 
-import model.RaceResult;
+import com.google.gson.Gson;
 import model.Record;
 import model.TxData;
+import model.LogInfo;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.PrintWriter;
 
 public class Logging {
     private static Logging instance;
 
     private String mLogFileName;
-    private static String mEventId;
-    private static String mRaceId;
-    private static String mMode;
-
+    private FileWriter mFileWriter;
+    private BufferedWriter mBufferedWriter;
+    private PrintWriter mPrintWriter;
+    private String mEventId;
+    private String mRaceId;
+    private Gson mGson;
     private Api mApi;
 
     public static synchronized Logging getInstance() {
@@ -24,7 +29,7 @@ public class Logging {
     }
 
     // Create log folder if not available
-    public void initLogPath() {
+    public void createLogFolder() {
         String logPathString = PropertyUtils.getLogPath();
         File logPath = new File(logPathString);
         if (logPath.exists()) {
@@ -37,68 +42,53 @@ public class Logging {
                 System.out.println("Log path creation error");
             }
         }
-
-        // get Api instance
-        mApi = Api.getInstance();
     }
     // Create log file and empty json array for a session
-    public String initLogging(String eventId, String raceId) {
+    public String start(String eventId, String raceId, Long startTime) {
+        mLogFileName = PropertyUtils.getLogPath() + PropertyUtils.getLogFileName();
+        mGson = new Gson();
+        mApi = Api.getInstance();
         mEventId = eventId;
         mRaceId = raceId;
-
-        String fileName = PropertyUtils.getLogFileName();
-        mLogFileName = PropertyUtils.getLogPath() + fileName;
-
-        if (mRaceId == "") {
-            mMode = "test";
-        } else {
-            mMode = "race";
-        }
+        LogInfo logInfo = new LogInfo(eventId, raceId);
+        logInfo.setStartTime(startTime);
+        String output = mGson.toJson(logInfo);
         try {
-            File file = new File (mLogFileName);
-            FileWriter fw = new FileWriter(file);
-            fw.write("");
-            fw.flush();
+            mFileWriter = new FileWriter(mLogFileName, true);
+            mBufferedWriter = new BufferedWriter(mFileWriter);
+            mPrintWriter = new PrintWriter(mBufferedWriter);
+            mBufferedWriter.write("[" + output + ",");
+            mPrintWriter.print(output);
         } catch (Exception e) {
             System.out.println("startReader Exception: " + e.getMessage());
         }
-        return fileName;
+        return mLogFileName;
     }
-
-    public void resetLogging() {
-        mLogFileName = null;
-        mEventId = null;
-        mRaceId = null;
-        mMode = null;
-    }
-
-    public void addEntry(Record record) {
-        RaceResult raceResult = new RaceResult(mEventId, mRaceId);
-        TxData payload = new TxData();
-
-        payload.setMode(mMode);
-        payload.addRecords(record);
-        payload.setType("rxdata");
-        payload.setRecordType("partial");
-
-        raceResult.setPayload(payload);
-
-        writeJSONToFile(); // Write result to log file
-        mApi.sendResult(raceResult);
-    }
-    // Write to log file
-    private void writeJSONToFile() {
-        // TODO: refine this
-        /*
+    // Create log file and empty json array for a session
+    public void stop(String eventId, String raceId, Long endTime) {
+        LogInfo logInfo = new LogInfo(eventId, raceId);
+        logInfo.setEndTime(endTime);
+        String output = mGson.toJson(logInfo);
         try {
-            FileWriter file = new FileWriter(mLogFileName);
-            file.write(mReadResult.toString());
-            file.flush();
-        } catch (IOException e) {
-            System.out.println("writeJSONToFile IOException: " + e.getMessage());
+            mBufferedWriter.write(output + "]");
+            mBufferedWriter.flush();
+            mBufferedWriter.close();
+            mPrintWriter.print(output);
+            mPrintWriter.flush();
+            mPrintWriter.close();
         } catch (Exception e) {
-            System.out.println("writeJSONToFile Exception: " + e.getMessage());
+            System.out.println("startReader Exception: " + e.getMessage());
         }
-        */
+    }
+    public void addEntry(Record record) {
+        TxData txData = new TxData(mEventId, mRaceId);
+        txData.addRecords(record);
+        String output = mGson.toJson(txData);
+        try {
+            mBufferedWriter.write("," + output);
+        } catch (Exception e) {
+            System.out.println("addEntry write file Exception: " + e.getMessage());
+        }
+        mApi.sendResult(output);
     }
 }
