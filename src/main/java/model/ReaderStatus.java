@@ -30,8 +30,6 @@ public class ReaderStatus {
         private Boolean error;
         private Boolean isSingulating;
         private String raceId;
-        private Long startTime;
-        private Long endTime;
         private Boolean debugMode;
         private String logFile;
 
@@ -39,8 +37,6 @@ public class ReaderStatus {
         public void setError(Boolean error) { this.error = error; }
         public void setIsSingulating(Boolean isSingulating) { this.isSingulating = isSingulating; }
         public void setRaceId(String raceId) { this.raceId = raceId; }
-        public void setStartTime(Long startTime) { this.startTime = startTime; }
-        public void setEndTime(Long endTime) { this.endTime = endTime; }
         public void setDebugMode(Boolean debugMode) { this.debugMode = debugMode; }
         public void setLogFile(String logFile) {
             this.logFile = logFile;
