@@ -53,6 +53,8 @@ public class Logging {
         LogInfo logInfo = new LogInfo(eventId, raceId);
         logInfo.setStartTime(startTime);
         String output = mGson.toJson(logInfo);
+        System.out.println("mLogFileName: " + mLogFileName);
+        System.out.println("output: " + output);
         try {
             mFileWriter = new FileWriter(mLogFileName, true);
             mBufferedWriter = new BufferedWriter(mFileWriter);

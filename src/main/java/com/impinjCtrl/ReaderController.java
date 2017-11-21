@@ -38,13 +38,13 @@ public class ReaderController {
         mReader = new ImpinjReader();
         try {
             mReader.connect(PropertyUtils.getReaderHost());
-            controlReader("STOP", "init", "init"); // Reader continues singulating event when JAVA app stops. resets reader at init.
+            instance.controlReader("STOP", "init", "init"); // Reader continues singulating event when JAVA app stops. resets reader at init.
             System.out.println("Connected to reader");
         } catch (OctaneSdkException e) {
             System.out.println("mReader.connect OctaneSdkException: " + e.getMessage());
         }
         mApi.initSocketIOInterface(); // Socket.io reader control interface
-        initTerminalInterface(); // Command-line reader control interface
+        instance.initTerminalInterface(); // Command-line reader control interface
     }
     public String controlReaderFromSocketIo (String input) {
         Gson gson = new Gson();
@@ -60,21 +60,22 @@ public class ReaderController {
         String message = "";
         Boolean isDebugMode = false;
         Boolean hasError = false;
-        Boolean isSingulating;
         try {
-            isSingulating = mReader.queryStatus().getIsSingulating();
+            Boolean isSingulating = mReader.queryStatus().getIsSingulating();
             if (command.equals("STOP")) {
                 if (!isSingulating) { // Already stopped, return error
                     message = "Already stopped. Ignoring stop command";
                     hasError = true;
                 } else {
                     message = "Reader stopped";
-                    rs.setEndTime(PropertyUtils.getTimestamp());
-                    Logging.getInstance().stop(eventId, raceId, rs.getEndTime());
-                    if (raceId != "") {
-                        rs.setRaceId(raceId);
+                    if (eventId != "init") {
+                        rs.setEndTime(PropertyUtils.getTimestamp());
+                        Logging.getInstance().stop(eventId, raceId, rs.getEndTime());
+                        if (raceId != "") {
+                            rs.setRaceId(raceId);
+                        }
+                        resetTimer();
                     }
-                    resetTimer();
                     mReader.removeTagReportListener();
                     mReader.deleteAllOpSequences();
                     mReader.stop();
@@ -94,7 +95,7 @@ public class ReaderController {
                         mTimer.schedule(new TimerTask() {
                             @Override
                             public void run() {
-                                controlReader("STOP", eventId, raceId);
+                                instance.controlReader("STOP", eventId, raceId);
                             }
                         }, 5000);
                     } else {
@@ -115,7 +116,7 @@ public class ReaderController {
             rs.setMessage(message);
             rs.setError(hasError);
             rs.setDebugMode(isDebugMode);
-            rs.setIsSingulating(isSingulating);
+            rs.setIsSingulating(mReader.queryStatus().getIsSingulating());
         } catch (OctaneSdkException e) {
             System.out.println("controlReader STATUS OctaneSdkException: " + e.getMessage());
         }
@@ -125,7 +126,11 @@ public class ReaderController {
     private void initTerminalInterface() {
         System.out.println("Commands: START || DEBUG || STOP || STATUS");
         Scanner s = new Scanner(System.in);
-        while (s.hasNextLine()) { controlReader(s.nextLine(), "readLine", "readLine"); }
+        while (s.hasNextLine()) {
+            ReaderStatus rs = controlReader(s.nextLine(), "readLine", "readLine");
+            Gson gson = new Gson();
+            System.out.println(gson.toJson(rs));
+        }
     }
     private void resetTimer () {
         if (mTimer != null) {
