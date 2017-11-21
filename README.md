@@ -1,6 +1,6 @@
 # ImpinjCtrl
 
-Control Impinj Speedway R420 through Octane SDK, using command prompt or socket.io requests
+Control Impinj Speedway R420 through Octane SDK, using command prompt or socket.io requests. This implementation is for race timing.
 
 Launch
 ===================
@@ -36,8 +36,6 @@ Response when receiving command:
     "error": true || false,
     "isSingulating": true || false,
     "raceId": "race-id",
-    "startTime": timestamp-long,  // returns only on START command
-    "endTime": timestamp-long,  // returns only on STOP command
     "logFile": "logfile-path"
   }
 }

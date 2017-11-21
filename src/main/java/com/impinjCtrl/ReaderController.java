@@ -69,8 +69,7 @@ public class ReaderController {
                 } else {
                     message = "Reader stopped";
                     if (eventId != "init") {
-                        rs.setEndTime(PropertyUtils.getTimestamp());
-                        Logging.getInstance().stop(eventId, raceId, rs.getEndTime());
+                        Logging.getInstance().stop(eventId, raceId);
                         if (raceId != "") {
                             rs.setRaceId(raceId);
                         }
@@ -85,8 +84,7 @@ public class ReaderController {
                     message = "Already started. Ignoring start command";
                     hasError = true;
                 } else {
-                    rs.setStartTime(PropertyUtils.getTimestamp());
-                    rs.setLogFile(Logging.getInstance().start(eventId, raceId, rs.getStartTime()));
+                    rs.setLogFile(Logging.getInstance().start(eventId, raceId));
                     if (command.equals("DEBUG")) {
                         message = "Starting reader (debug mode)";
                         isDebugMode = true;

@@ -2,7 +2,7 @@ package model;
 
 public class Record {
     private String epc;
-    private long time;
+    private long timestamp;
     private short ant;
     private double signal;
     //private double angle;
@@ -16,11 +16,11 @@ public class Record {
     }
 
     public long getTime() {
-        return time;
+        return timestamp;
     }
 
     public void setTime(long timestamp) {
-        this.time = timestamp;
+        this.timestamp = timestamp;
     }
 
     public short getAnt() {

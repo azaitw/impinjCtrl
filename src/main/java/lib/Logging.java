@@ -44,14 +44,13 @@ public class Logging {
         }
     }
     // Create log file and empty json array for a session
-    public String start(String eventId, String raceId, Long startTime) {
+    public String start(String eventId, String raceId) {
         mLogFileName = PropertyUtils.getLogPath() + PropertyUtils.getLogFileName();
         mGson = new Gson();
         mApi = Api.getInstance();
         mEventId = eventId;
         mRaceId = raceId;
         LogInfo logInfo = new LogInfo(eventId, raceId);
-        logInfo.setStartTime(startTime);
         String output = mGson.toJson(logInfo);
         System.out.println("mLogFileName: " + mLogFileName);
         System.out.println("output: " + output);
@@ -67,15 +66,11 @@ public class Logging {
         return mLogFileName;
     }
     // Create log file and empty json array for a session
-    public void stop(String eventId, String raceId, Long endTime) {
-        LogInfo logInfo = new LogInfo(eventId, raceId);
-        logInfo.setEndTime(endTime);
-        String output = mGson.toJson(logInfo);
+    public void stop(String eventId, String raceId) {
         try {
-            mBufferedWriter.write(output + "]");
+            mBufferedWriter.write("]");
             mBufferedWriter.flush();
             mBufferedWriter.close();
-            mPrintWriter.print(output);
             mPrintWriter.flush();
             mPrintWriter.close();
         } catch (Exception e) {
@@ -84,7 +79,7 @@ public class Logging {
     }
     public void addEntry(Record record) {
         TxData txData = new TxData(mEventId, mRaceId);
-        txData.addRecords(record);
+        txData.addRecord(record);
         String output = mGson.toJson(txData);
         try {
             mBufferedWriter.write("," + output);
