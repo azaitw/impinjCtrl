@@ -16,17 +16,22 @@ public class TxData {
             this.payload.setEventId(eventId);
         }
     }
-    public void addRecords (Record record) { this.payload.addRecords(record); }
+    public String getType() { return this.type; }
+    public TxDataPayload getPayload() { return this.payload; }
+
+    public String getEventId() { return this.payload.eventId; }
+    public String getRaceId() { return this.payload.raceId; }
+    public void addRecord (Record record) { this.payload.addRecord(record); }
     public void setRecords(ArrayList<Record> records) { this.payload.setRecords(records); }
 
-    private class TxDataPayload {
+    private static class TxDataPayload {
         private String eventId;
         private String raceId;
         private ArrayList<Record> records = new ArrayList();
         public void setRecords(ArrayList<Record> records) {
             this.records = records;
         }
-        public void addRecords (Record record) { this.records.add(record); }
+        public void addRecord (Record record) { this.records.add(record); }
 
         public void setEventId (String eventId) { this.eventId = eventId; }
         public void setRaceId (String raceId) { this.raceId = raceId; }

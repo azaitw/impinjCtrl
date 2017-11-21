@@ -8,9 +8,17 @@ public class ReaderStatus {
         this.type = "readerstatus";
         this.payload = new ReaderStatusPayload();
     }
-    public Boolean getIsDebugMode() { return this.payload.debugMode; }
+    public String getType() { return this.type; }
+    public ReaderStatusPayload getPayload() { return this.payload; }
+
+    public String getMessage() { return this.payload.message; }
+    public Boolean getError() { return this.payload.error; }
+    public Boolean getIsSingulating() { return this.payload.isSingulating; }
+    public String getRaceId() { return this.payload.raceId; }
     public Long getStartTime() { return this.payload.startTime; }
     public Long getEndTime() { return this.payload.endTime; }
+    public Boolean getIsDebugMode() { return this.payload.debugMode; }
+    public String getLogFile() { return this.payload.logFile; }
 
     public void setMessage(String message) { this.payload.setMessage(message); }
     public void setError(Boolean error) { this.payload.setError(error); }
@@ -21,7 +29,7 @@ public class ReaderStatus {
     public void setDebugMode(Boolean debugMode) { this.payload.setDebugMode(debugMode); }
     public void setLogFile(String logFile) { this.payload.setLogFile(logFile); }
 
-    private class ReaderStatusPayload {
+    private static class ReaderStatusPayload {
         private String message;
         private Boolean error;
         private Boolean isSingulating;
