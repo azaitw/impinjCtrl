@@ -1,13 +1,9 @@
 package lib;
 
-import com.google.gson.Gson;
 import com.impinjCtrl.ReaderController;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
-import model.RaceResult;
-import model.ReaderInfoResult;
-import model.SocketInput;
 import okhttp3.*;
 import javax.net.ssl.*;
 import java.io.IOException;
@@ -24,7 +20,6 @@ public class Api {
     private static Api instance;
     private String mSocketId; // Session-based data, init at startreader, destroy at terminatereader
     private OkHttpClient mHttpClient;
-    private Gson mGson;
 
     public static synchronized Api getInstance() {
         if (instance == null) {
@@ -39,19 +34,17 @@ public class Api {
                 .writeTimeout(10, TimeUnit.SECONDS)
                 .readTimeout(10, TimeUnit.SECONDS)
                 .build();
-
-        mGson = new Gson();
     }
 
     private void request (Request request, Callback cb) { mHttpClient.newCall(request).enqueue(cb); }
 
     // Send reading entry to API server
     // output: { type: 'rxdata', payload: {event: STR, race: STR, records: ARRAY, recordType: STR} }
-    public void sendResult(RaceResult result) {
+    public void sendResult(String result) {
         if (mSocketId != null) {
             Request req = new Request.Builder()
                     .url(PropertyUtils.getAPiHost() + "/api/socket/impinj?sid=" + mSocketId)
-                    .post(RequestBody.create(Api.MEDIA_TYPE_JSON, mGson.toJson(result)))
+                    .post(RequestBody.create(Api.MEDIA_TYPE_JSON, result))
                     .build();
 
             request(req, new Callback() {
@@ -122,28 +115,13 @@ public class Api {
             }).on("readercommand", new Emitter.Listener() {
                 // It's suppose to get event, race infos
                 public void call(Object... args) {
-                    // JSONObject mMsg = new JSONObject();
-                    ReaderInfoResult infoResult;
                     String input = args[0].toString();
-
-                    SocketInput inputJson = mGson.fromJson(input, SocketInput.class);
-                    String command = inputJson.getCommand();
-                    String eventId = inputJson.getEventId();
-                    String raceId = inputJson.getRaceId();
-
-                    if (command == null || eventId == null || raceId == null) {
-                        return;
-                    }
-
-                    infoResult = ReaderController.getInstance().controlReader(command, eventId, raceId);
-
-                    // initial log file
-                    infoResult.setLogFile(Logging.getInstance().initLogging(eventId, raceId));
-
-                    System.out.println("EVENT_READER_COMMAND Response: " + mGson.toJson(infoResult));
+                    System.out.println("Socket IO Input: " + input);
+                    String output = ReaderController.getInstance().controlReaderFromSocketIo(input);
+                    System.out.println("EVENT_READER_COMMAND Response: " + output);
                     Request sendMsg = new Request.Builder()
                             .url(mApiHost + "/api/socket/impinj?sid=" + mSocketId)
-                            .post(RequestBody.create(Api.MEDIA_TYPE_JSON, mGson.toJson(infoResult)))
+                            .post(RequestBody.create(Api.MEDIA_TYPE_JSON, output))
                             .build();
 
                     request(sendMsg, new Callback() {

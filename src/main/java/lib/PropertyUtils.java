@@ -4,9 +4,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class PropertyUtils {
-    public static String READHER_HOST = "readerHost";
-    public static String API_HOSTER = "apiHost";
-    public static String LOG_PATH = "logPath";
+    private static final String READHER_HOST = "readerHost";
+    private static final String API_HOSTER = "apiHost";
+    private static final String LOG_PATH = "logPath";
 
     public static String getLogFileName() { return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()) + ".json"; }
     public static String getAPiHost() { return System.getProperty(API_HOSTER); }
