@@ -1,7 +1,7 @@
 # startup command for rpi
 
 # 1. create log folder
-mkdir -p logs
+#mkdir -p logs
 
 # 2. restart ntp service to sync system time
 sudo /etc/init.d/ntp stop
