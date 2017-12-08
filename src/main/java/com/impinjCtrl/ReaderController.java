@@ -18,6 +18,7 @@ public class ReaderController {
     private Api mApi;
     private Logging mLogging;
     private Timer mTimer;
+    private Boolean isDebugMode;
 
     public static synchronized ReaderController getInstance() {
         if (instance == null) {
@@ -52,7 +53,7 @@ public class ReaderController {
         String command = inputJson.getCommand();
         String eventId = inputJson.getEventId();
         String raceId = inputJson.getRaceId();
-        return gson.toJson(controlReader(command, eventId, raceId));
+        return gson.toJson(instance.controlReader(command, eventId, raceId));
     }
     // control readers' start, stop
     public ReaderStatus controlReader(String command, final String eventId, final String raceId) {
@@ -94,6 +95,7 @@ public class ReaderController {
                             @Override
                             public void run() {
                                 instance.controlReader("STOP", eventId, raceId);
+                                System.out.println("Stopped");
                             }
                         }, 5000);
                     } else {
@@ -102,6 +104,7 @@ public class ReaderController {
                             rs.setRaceId(raceId);
                         }
                     }
+                    setIsDebugMode(isDebugMode);
                     mReader.setTagReportListener(new ReportFormat());
                     mReader.applySettings(getSettings(mReader, isDebugMode));
                     mReader.start();
@@ -125,7 +128,7 @@ public class ReaderController {
         System.out.println("Commands: START || DEBUG || STOP || STATUS");
         Scanner s = new Scanner(System.in);
         while (s.hasNextLine()) {
-            ReaderStatus rs = controlReader(s.nextLine(), "readLine", "readLine");
+            ReaderStatus rs = instance.controlReader(s.nextLine(), "readLine", "readLine");
             Gson gson = new Gson();
             System.out.println(gson.toJson(rs));
         }
@@ -154,13 +157,13 @@ public class ReaderController {
         settings.setReaderMode(ReaderMode.AutoSetDenseReader);
         settings.setSession(1);
         settings.setSearchMode(SearchMode.DualTarget);
-
+/*
         if (isDebugMode) {
             settings.setSearchMode(SearchMode.DualTarget);
         } else {
             settings.setSearchMode(SearchMode.SingleTarget); // TO DO: test single target's read rate
         }
-
+*/
         report.setMode(ReportMode.Individual);
         report.setIncludeAntennaPortNumber(true);
         report.setIncludePeakRssi(true);
@@ -168,5 +171,10 @@ public class ReaderController {
         antennas.enableAll();
         return settings;
     }
-
+    private void setIsDebugMode (Boolean isDebugMode) {
+        this.isDebugMode = isDebugMode;
+    }
+    public Boolean getIsDebugMode() {
+        return this.isDebugMode;
+    }
 }

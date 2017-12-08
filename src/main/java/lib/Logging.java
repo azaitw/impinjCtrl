@@ -1,6 +1,7 @@
 package lib;
 
 import com.google.gson.Gson;
+import com.impinjCtrl.ReaderController;
 import model.Record;
 import model.TxData;
 import model.LogInfo;
@@ -81,6 +82,9 @@ public class Logging {
         TxData txData = new TxData(mEventId, mRaceId);
         txData.addRecord(record);
         String output = mGson.toJson(txData);
+        if (ReaderController.getInstance().getIsDebugMode()) {
+            System.out.println(output);
+        }
         try {
             mBufferedWriter.write("," + output);
         } catch (Exception e) {
