@@ -13,10 +13,7 @@ import java.util.TimerTask;
 
 public class ReaderController {
     private static ReaderController instance;
-
     private ImpinjReader mReader;
-    private Api mApi;
-    private Logging mLogging;
     private Timer mTimer;
 
     public static synchronized ReaderController getInstance() {
@@ -28,12 +25,11 @@ public class ReaderController {
     // Init command when executing this app
     public void initialize() {
         // new Api instance
-        mApi = Api.getInstance();
-        mApi.buildHttpClient();
+        Api api = Api.getInstance();
+        api.buildHttpClient();
 
-        // new Logging instance
-        mLogging = Logging.getInstance();
-        mLogging.createLogFolder();
+        // Execute create log folder command
+        Logging.getInstance().createLogFolder();
 
         mReader = new ImpinjReader();
         try {
@@ -43,7 +39,7 @@ public class ReaderController {
         } catch (OctaneSdkException e) {
             System.out.println("mReader.connect OctaneSdkException: " + e.getMessage());
         }
-        mApi.initSocketIOInterface(); // Socket.io reader control interface
+        api.initSocketIOInterface(); // Socket.io reader control interface
         instance.initTerminalInterface(); // Command-line reader control interface
     }
     public String controlReaderFromSocketIo (String input) {

@@ -25,7 +25,6 @@ public class TxData {
             this.records = records;
         }
         public void addRecord (Record record) { this.records.add(record); }
-
         public void setEventId (String eventId) { this.eventId = eventId; }
     }
 }

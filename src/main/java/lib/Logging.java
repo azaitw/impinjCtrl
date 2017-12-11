@@ -1,7 +1,6 @@
 package lib;
 
 import com.google.gson.Gson;
-import com.impinjCtrl.ReaderController;
 import model.Record;
 import model.TxData;
 import model.LogInfo;
