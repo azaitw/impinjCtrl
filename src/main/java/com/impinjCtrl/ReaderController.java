@@ -18,7 +18,6 @@ public class ReaderController {
     private Api mApi;
     private Logging mLogging;
     private Timer mTimer;
-    private Boolean isDebugMode;
 
     public static synchronized ReaderController getInstance() {
         if (instance == null) {
@@ -39,7 +38,7 @@ public class ReaderController {
         mReader = new ImpinjReader();
         try {
             mReader.connect(PropertyUtils.getReaderHost());
-            instance.controlReader("STOP", "init", "init"); // Reader continues singulating event when JAVA app stops. resets reader at init.
+            instance.controlReader("STOP", "init"); // Reader continues singulating event when JAVA app stops. resets reader at init.
             System.out.println("Connected to reader");
         } catch (OctaneSdkException e) {
             System.out.println("mReader.connect OctaneSdkException: " + e.getMessage());
@@ -52,14 +51,12 @@ public class ReaderController {
         SocketInput inputJson = gson.fromJson(input, SocketInput.class);
         String command = inputJson.getCommand();
         String eventId = inputJson.getEventId();
-        String raceId = inputJson.getRaceId();
-        return gson.toJson(instance.controlReader(command, eventId, raceId));
+        return gson.toJson(instance.controlReader(command, eventId));
     }
     // control readers' start, stop
-    public ReaderStatus controlReader(String command, final String eventId, final String raceId) {
+    public ReaderStatus controlReader(String command, final String eventId) {
         ReaderStatus rs = new ReaderStatus();
         String message = "";
-        Boolean isDebugMode = false;
         Boolean hasError = false;
         try {
             Boolean isSingulating = mReader.queryStatus().getIsSingulating();
@@ -70,10 +67,7 @@ public class ReaderController {
                 } else {
                     message = "Reader stopped";
                     if (eventId != "init") {
-                        Logging.getInstance().stop(eventId, raceId);
-                        if (raceId != "") {
-                            rs.setRaceId(raceId);
-                        }
+                        Logging.getInstance().stop(eventId);
                         resetTimer();
                     }
                     mReader.removeTagReportListener();
@@ -85,28 +79,23 @@ public class ReaderController {
                     message = "Already started. Ignoring start command";
                     hasError = true;
                 } else {
-                    rs.setLogFile(Logging.getInstance().start(eventId, raceId));
+                    rs.setLogFile(Logging.getInstance().start(eventId));
                     if (command.equals("DEBUG")) {
                         message = "Starting reader (debug mode)";
-                        isDebugMode = true;
                         resetTimer();
                         mTimer = new java.util.Timer();
                         mTimer.schedule(new TimerTask() {
                             @Override
                             public void run() {
-                                instance.controlReader("STOP", eventId, raceId);
+                                instance.controlReader("STOP", eventId);
                                 System.out.println("Stopped");
                             }
                         }, 5000);
                     } else {
                         message = "Starting reader";
-                        if (raceId != "") {
-                            rs.setRaceId(raceId);
-                        }
                     }
-                    setIsDebugMode(isDebugMode);
                     mReader.setTagReportListener(new ReportFormat());
-                    mReader.applySettings(getSettings(mReader, isDebugMode));
+                    mReader.applySettings(getSettings(mReader));
                     mReader.start();
                 }
             } else if (command.equals("STATUS")) {
@@ -116,7 +105,6 @@ public class ReaderController {
             }
             rs.setMessage(message);
             rs.setError(hasError);
-            rs.setDebugMode(isDebugMode);
             rs.setIsSingulating(mReader.queryStatus().getIsSingulating());
         } catch (OctaneSdkException e) {
             System.out.println("controlReader STATUS OctaneSdkException: " + e.getMessage());
@@ -128,7 +116,7 @@ public class ReaderController {
         System.out.println("Commands: START || DEBUG || STOP || STATUS");
         Scanner s = new Scanner(System.in);
         while (s.hasNextLine()) {
-            ReaderStatus rs = instance.controlReader(s.nextLine(), "readLine", "readLine");
+            ReaderStatus rs = instance.controlReader(s.nextLine(), "readLine");
             Gson gson = new Gson();
             System.out.println(gson.toJson(rs));
         }
@@ -149,7 +137,7 @@ public class ReaderController {
     http://racetiming.wimsey.co/2015/05/rfid-inventory-search-modes.html
     settings.setSearchMode(SearchMode.SingleTarget);
 */
-    private Settings getSettings (ImpinjReader reader, Boolean isDebugMode) throws OctaneSdkException {
+    private Settings getSettings (ImpinjReader reader) throws OctaneSdkException {
         Settings settings = reader.queryDefaultSettings();
         ReportConfig report = settings.getReport();
         AntennaConfigGroup antennas = settings.getAntennas();
@@ -157,24 +145,12 @@ public class ReaderController {
         settings.setReaderMode(ReaderMode.AutoSetDenseReader);
         settings.setSession(1);
         settings.setSearchMode(SearchMode.DualTarget);
-/*
-        if (isDebugMode) {
-            settings.setSearchMode(SearchMode.DualTarget);
-        } else {
-            settings.setSearchMode(SearchMode.SingleTarget); // TO DO: test single target's read rate
-        }
-*/
+
         report.setMode(ReportMode.Individual);
         report.setIncludeAntennaPortNumber(true);
         report.setIncludePeakRssi(true);
         antennas.disableAll();
         antennas.enableAll();
         return settings;
-    }
-    private void setIsDebugMode (Boolean isDebugMode) {
-        this.isDebugMode = isDebugMode;
-    }
-    public Boolean getIsDebugMode() {
-        return this.isDebugMode;
     }
 }
