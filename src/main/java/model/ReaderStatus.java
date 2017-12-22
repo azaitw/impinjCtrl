@@ -2,7 +2,7 @@ package model;
 
 public class ReaderStatus {
     private ReaderStatusPayload payload;
-    private String type = "readerstatus";
+    private String type;
 
     public ReaderStatus() {
         this.type = "readerstatus";
