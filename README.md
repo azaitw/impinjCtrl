@@ -21,8 +21,7 @@ STATUS  Return reader status
 Socket.io input
 ===================
 {
-  "command": "START" || "STOP" || "STATUS",
-  "eventId": "event-id" // Custom parameter
+  "command": "START" || "STOP" || "STATUS"
 }
 
 Output
@@ -42,7 +41,6 @@ Tag report - single:
 {
   "type": "txdata",
   "payload": {
-    "eventId": "event-id",
     "records": [
       {"epc": "epc-string", time: timestamp-long}
     ]
@@ -53,7 +51,6 @@ Tag report - complete: (Not yet implemented)
 {
   "type": "txdata_complete",
   "payload": {
-    "eventId": "event-id",
     "startTime": timestamp-long,
     "endTime": timestamp-long
     "records": [

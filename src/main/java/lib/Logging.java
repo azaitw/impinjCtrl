@@ -3,7 +3,7 @@ package lib;
 import com.google.gson.Gson;
 import model.Record;
 import model.TxData;
-import model.LogInfo;
+import model.LogReadCountInfo;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -16,9 +16,9 @@ public class Logging {
     private FileWriter mFileWriter;
     private BufferedWriter mBufferedWriter;
     private PrintWriter mPrintWriter;
-    private String mEventId;
     private Gson mGson;
     private Api mApi;
+    private Integer mDebugCounter;
 
     public static synchronized Logging getInstance() {
         if (instance == null) {
@@ -43,45 +43,47 @@ public class Logging {
         }
     }
     // Create log file and empty json array for a session
-    public String start(String eventId) {
+    public String start() {
         mLogFileName = PropertyUtils.getLogPath() + PropertyUtils.getLogFileName();
         mGson = new Gson();
         mApi = Api.getInstance();
-        mEventId = eventId;
-        LogInfo logInfo = new LogInfo(eventId);
-        String output = mGson.toJson(logInfo);
+        mDebugCounter = 0;
         System.out.println("mLogFileName: " + mLogFileName);
-        System.out.println("output: " + output);
         try {
             mFileWriter = new FileWriter(mLogFileName, true);
             mBufferedWriter = new BufferedWriter(mFileWriter);
             mPrintWriter = new PrintWriter(mBufferedWriter);
-            mBufferedWriter.write("[" + output + ",");
-            mPrintWriter.print(output);
+            mBufferedWriter.write("[ ");
         } catch (Exception e) {
-            System.out.println("startReader Exception: " + e.getMessage());
+            System.out.println("Logging start Exception: " + e.getMessage());
         }
         return mLogFileName;
     }
     // Create log file and empty json array for a session
-    public void stop(String eventId) {
+    public void stop() {
         try {
-            mBufferedWriter.write("]");
-            mBufferedWriter.flush();
+            LogReadCountInfo readCount = new LogReadCountInfo(mDebugCounter);
+            String output = mGson.toJson(readCount);
+            System.out.println(output);
+            try {
+                mBufferedWriter.write(output + " ]");
+            } catch (Exception e) {
+                System.out.println("Logging stop write file Exception: " + e.getMessage());
+            }
             mBufferedWriter.close();
-            mPrintWriter.flush();
             mPrintWriter.close();
         } catch (Exception e) {
-            System.out.println("startReader Exception: " + e.getMessage());
+            System.out.println("Logging stop Exception: " + e.getMessage());
         }
     }
     public void addEntry(Record record) {
-        TxData txData = new TxData(mEventId);
+        TxData txData = new TxData();
         txData.addRecord(record);
-        String output = mGson.toJson(txData);
-        System.out.println(output);
+        String output = mGson.toJson(record);
+        mDebugCounter += 1;
+        mPrintWriter.println(output);
         try {
-            mBufferedWriter.write("," + output);
+            mBufferedWriter.write(output + ", ");
         } catch (Exception e) {
             System.out.println("addEntry write file Exception: " + e.getMessage());
         }

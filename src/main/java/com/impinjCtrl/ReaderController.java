@@ -33,8 +33,9 @@ public class ReaderController {
 
         mReader = new ImpinjReader();
         try {
+            System.out.println("Connecting...");
             mReader.connect(PropertyUtils.getReaderHost());
-            instance.controlReader("STOP", "init"); // Reader continues singulating event when JAVA app stops. resets reader at init.
+            instance.controlReader("STOP"); // Reader continues singulating event when JAVA app stops. resets reader at init.
             System.out.println("Connected to reader");
         } catch (OctaneSdkException e) {
             System.out.println("mReader.connect OctaneSdkException: " + e.getMessage());
@@ -46,11 +47,10 @@ public class ReaderController {
         Gson gson = new Gson();
         SocketInput inputJson = gson.fromJson(input, SocketInput.class);
         String command = inputJson.getCommand();
-        String eventId = inputJson.getEventId();
-        return gson.toJson(instance.controlReader(command, eventId));
+        return gson.toJson(instance.controlReader(command));
     }
     // control readers' start, stop
-    public ReaderStatus controlReader(String command, final String eventId) {
+    public ReaderStatus controlReader(String command) {
         ReaderStatus rs = new ReaderStatus();
         String message = "";
         Boolean hasError = false;
@@ -62,10 +62,8 @@ public class ReaderController {
                     hasError = true;
                 } else {
                     message = "Reader stopped";
-                    if (eventId != "init") {
-                        Logging.getInstance().stop(eventId);
-                        resetTimer();
-                    }
+                    Logging.getInstance().stop();
+                    resetTimer();
                     mReader.removeTagReportListener();
                     mReader.deleteAllOpSequences();
                     mReader.stop();
@@ -75,7 +73,7 @@ public class ReaderController {
                     message = "Already started. Ignoring start command";
                     hasError = true;
                 } else {
-                    rs.setLogFile(Logging.getInstance().start(eventId));
+                    rs.setLogFile(Logging.getInstance().start());
                     if (command.equals("DEBUG")) {
                         message = "Starting reader (debug mode)";
                         resetTimer();
@@ -83,7 +81,7 @@ public class ReaderController {
                         mTimer.schedule(new TimerTask() {
                             @Override
                             public void run() {
-                                instance.controlReader("STOP", eventId);
+                                instance.controlReader("STOP");
                                 System.out.println("Stopped");
                             }
                         }, 5000);
@@ -112,7 +110,7 @@ public class ReaderController {
         System.out.println("Commands: START || DEBUG || STOP || STATUS");
         Scanner s = new Scanner(System.in);
         while (s.hasNextLine()) {
-            ReaderStatus rs = instance.controlReader(s.nextLine(), "readLine");
+            ReaderStatus rs = instance.controlReader(s.nextLine());
             Gson gson = new Gson();
             System.out.println(gson.toJson(rs));
         }
@@ -132,7 +130,7 @@ public class ReaderController {
     Race timing recommendation: session 1
     http://racetiming.wimsey.co/2015/05/rfid-inventory-search-modes.html
     settings.setSearchMode(SearchMode.SingleTarget);
-*/
+    */
     private Settings getSettings (ImpinjReader reader) throws OctaneSdkException {
         Settings settings = reader.queryDefaultSettings();
         ReportConfig report = settings.getReport();
