@@ -102,7 +102,7 @@ public class Api {
                         }
                         public void onResponse(Call call, Response response) throws IOException {
                             ResponseBody body = response.body();
-                            System.out.println(response.body());
+                            System.out.println(body.string());
                             body.close();
                         }
                     });
