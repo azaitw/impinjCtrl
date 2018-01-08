@@ -22,8 +22,7 @@ Socket.io input
 ===================
 {
   "command": "START" || "STOP" || "STATUS",
-  "eventId": "event-id", // Custom parameter
-  "raceId": "race-id", // Custom parameter
+  "eventId": "event-id" // Custom parameter
 }
 
 Output
@@ -35,24 +34,13 @@ Response when receiving command:
     "message": "reader command message",
     "error": true || false,
     "isSingulating": true || false,
-    "raceId": "race-id",
     "logFile": "logfile-path"
   }
 }
 
-Tag report - race:
+Tag report - single:
 {
   "type": "txdata",
-  "payload": {
-    "raceId": "race-id",
-    "records": [
-      {"epc": "epc-string", time: timestamp-long}
-    ]
-  }
-}
-Tag report - test:
-{
-  "type": "txdata_test",
   "payload": {
     "eventId": "event-id",
     "records": [
@@ -61,17 +49,11 @@ Tag report - test:
   }
 }
 
-Log
-===================
-
-
-
-
 Tag report - complete: (Not yet implemented)
 {
   "type": "txdata_complete",
   "payload": {
-    "raceId": "race-id",
+    "eventId": "event-id",
     "startTime": timestamp-long,
     "endTime": timestamp-long
     "records": [

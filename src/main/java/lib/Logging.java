@@ -1,7 +1,6 @@
 package lib;
 
 import com.google.gson.Gson;
-import com.impinjCtrl.ReaderController;
 import model.Record;
 import model.TxData;
 import model.LogInfo;
@@ -18,7 +17,6 @@ public class Logging {
     private BufferedWriter mBufferedWriter;
     private PrintWriter mPrintWriter;
     private String mEventId;
-    private String mRaceId;
     private Gson mGson;
     private Api mApi;
 
@@ -45,13 +43,12 @@ public class Logging {
         }
     }
     // Create log file and empty json array for a session
-    public String start(String eventId, String raceId) {
+    public String start(String eventId) {
         mLogFileName = PropertyUtils.getLogPath() + PropertyUtils.getLogFileName();
         mGson = new Gson();
         mApi = Api.getInstance();
         mEventId = eventId;
-        mRaceId = raceId;
-        LogInfo logInfo = new LogInfo(eventId, raceId);
+        LogInfo logInfo = new LogInfo(eventId);
         String output = mGson.toJson(logInfo);
         System.out.println("mLogFileName: " + mLogFileName);
         System.out.println("output: " + output);
@@ -67,7 +64,7 @@ public class Logging {
         return mLogFileName;
     }
     // Create log file and empty json array for a session
-    public void stop(String eventId, String raceId) {
+    public void stop(String eventId) {
         try {
             mBufferedWriter.write("]");
             mBufferedWriter.flush();
@@ -79,12 +76,10 @@ public class Logging {
         }
     }
     public void addEntry(Record record) {
-        TxData txData = new TxData(mEventId, mRaceId);
+        TxData txData = new TxData(mEventId);
         txData.addRecord(record);
         String output = mGson.toJson(txData);
-        if (ReaderController.getInstance().getIsDebugMode()) {
-            System.out.println(output);
-        }
+        System.out.println(output);
         try {
             mBufferedWriter.write("," + output);
         } catch (Exception e) {
