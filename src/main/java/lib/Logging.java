@@ -7,7 +7,6 @@ import model.LogReadCountInfo;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.PrintWriter;
 
 public class Logging {
     private static Logging instance;
@@ -15,7 +14,6 @@ public class Logging {
     private String mLogFileName;
     private FileWriter mFileWriter;
     private BufferedWriter mBufferedWriter;
-    private PrintWriter mPrintWriter;
     private Gson mGson;
     private Api mApi;
     private Integer mDebugCounter;
@@ -52,7 +50,6 @@ public class Logging {
         try {
             mFileWriter = new FileWriter(mLogFileName, true);
             mBufferedWriter = new BufferedWriter(mFileWriter);
-            mPrintWriter = new PrintWriter(mBufferedWriter);
             mBufferedWriter.write("[ ");
         } catch (Exception e) {
             System.out.println("Logging start Exception: " + e.getMessage());
@@ -71,7 +68,6 @@ public class Logging {
                 System.out.println("Logging stop write file Exception: " + e.getMessage());
             }
             mBufferedWriter.close();
-            mPrintWriter.close();
         } catch (Exception e) {
             System.out.println("Logging stop Exception: " + e.getMessage());
         }
@@ -81,7 +77,7 @@ public class Logging {
         txData.addRecord(record);
         String output = mGson.toJson(record);
         mDebugCounter += 1;
-        mPrintWriter.println(output);
+        System.out.println(output);
         try {
             mBufferedWriter.write(output + ", ");
         } catch (Exception e) {
