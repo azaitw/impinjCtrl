@@ -54,6 +54,7 @@ public class ReaderController {
         ReaderStatus rs = new ReaderStatus();
         String message = "";
         Boolean hasError = false;
+        Long timestamp = PropertyUtils.getTimestamp();
         try {
             Boolean isSingulating = mReader.queryStatus().getIsSingulating();
             if (command.equals("STOP")) {
@@ -63,7 +64,7 @@ public class ReaderController {
                 } else {
                     message = "Reader stopped";
                     Logging.getInstance().stop();
-                    resetTimer();
+                    resetTimer(); // debug會用到自動倒數的timer
                     mReader.removeTagReportListener();
                     mReader.deleteAllOpSequences();
                     mReader.stop();
@@ -99,6 +100,7 @@ public class ReaderController {
             }
             rs.setMessage(message);
             rs.setError(hasError);
+            rs.setTimestamp(timestamp);
             rs.setIsSingulating(mReader.queryStatus().getIsSingulating());
         } catch (OctaneSdkException e) {
             System.out.println("controlReader STATUS OctaneSdkException: " + e.getMessage());
