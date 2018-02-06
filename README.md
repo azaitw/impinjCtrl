@@ -33,7 +33,8 @@ Response when receiving command:
     "message": "reader command message",
     "error": true || false,
     "isSingulating": true || false,
-    "logFile": "logfile-path"
+    "logFile": "logfile-path",
+    "timestamp": timestamp-long
   }
 }
 

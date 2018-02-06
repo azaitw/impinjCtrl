@@ -94,6 +94,7 @@ public class Api {
                 public void call(Object... args) {
                     mSocketId = mSocket.id();
                     System.out.println("Socket connected: " + mApiHost + ". sid: " + mSocketId);
+                    // get request. 連線到 api
                     Request sendMsg = new Request.Builder().url(mApiHost + "/api/socket/impinj?sid=" + mSocketId).build();
                     request(sendMsg, new Callback() {
                         public void onFailure(Call call, IOException e) {
