@@ -7,9 +7,16 @@ import model.LogReadCountInfo;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+
 
 public class Logging {
     private static Logging instance;
+
+    private final long delay = 0;
+    private final long intervalPeriodMs = 1000;
 
     private String mLogFileName;
     private FileWriter mFileWriter;
@@ -17,6 +24,10 @@ public class Logging {
     private Gson mGson;
     private Api mApi;
     private Integer mDebugCounter;
+
+    private ArrayList<Record> aggregateRecords = new ArrayList<Record>();
+    private TimerTask intervalTask;
+    private Timer interval;
 
     public static synchronized Logging getInstance() {
         if (instance == null) {
@@ -42,6 +53,43 @@ public class Logging {
     }
     // Create log file and empty json array for a session
     public String start() {
+        // initial & check clean a interval
+        if (interval != null || intervalTask != null) {
+            cleanInterval();
+        }
+
+        intervalTask = new TimerTask() {
+            @Override
+            public void run() {
+                TxData txData = new TxData();
+
+                for(int i=0; i<aggregateRecords.size(); i++) {
+                    if (aggregateRecords.get(i) != null) {
+                        txData.addRecord(aggregateRecords.get(i));
+                    }
+                }
+
+                aggregateRecords.clear();
+
+                String output = mGson.toJson(txData);
+                mDebugCounter += 1;
+                System.out.println(output);
+
+                try {
+                    mBufferedWriter.write(output + ", ");
+                } catch (Exception e) {
+                    System.out.println("addEntry write file Exception: " + e.getMessage());
+                }
+                mApi.sendResult(output);
+            }
+        };
+
+        interval = new Timer();
+
+        // schedules the task to be run in an interval
+        interval.scheduleAtFixedRate(intervalTask, delay,
+                intervalPeriodMs);
+
         mLogFileName = PropertyUtils.getLogPath() + PropertyUtils.getLogFileName();
         mGson = new Gson();
         mApi = Api.getInstance();
@@ -68,14 +116,17 @@ public class Logging {
                 System.out.println("Logging stop write file Exception: " + e.getMessage());
             }
             mBufferedWriter.close();
+            cleanInterval();
         } catch (Exception e) {
             System.out.println("Logging stop Exception: " + e.getMessage());
         }
+
     }
     public void addEntry(Record record) {
-        TxData txData = new TxData();
-        txData.addRecord(record);
-        String output = mGson.toJson(record);
+        // TxData txData = new TxData();
+        // txData.addRecord(record);
+        /*
+        String output = mGson.toJson(txData);
         mDebugCounter += 1;
         System.out.println(output);
         try {
@@ -83,6 +134,14 @@ public class Logging {
         } catch (Exception e) {
             System.out.println("addEntry write file Exception: " + e.getMessage());
         }
-        mApi.sendResult(output);
+        */
+        // mApi.sendResult(output);
+        aggregateRecords.add(record);
+    }
+
+    private void cleanInterval() {
+        interval = null;
+        intervalTask.cancel();
+        intervalTask = null;
     }
 }
