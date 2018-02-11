@@ -61,6 +61,10 @@ public class Logging {
         intervalTask = new TimerTask() {
             @Override
             public void run() {
+
+                if (aggregateRecords == null || aggregateRecords.size() == 0) {
+                    return;
+                }
                 TxData txData = new TxData();
 
                 for(int i=0; i<aggregateRecords.size(); i++) {
@@ -69,9 +73,11 @@ public class Logging {
                     }
                 }
 
-                aggregateRecords.clear();
+
 
                 String output = mGson.toJson(txData);
+
+                aggregateRecords.clear();
                 mDebugCounter += 1;
                 System.out.println(output);
 
