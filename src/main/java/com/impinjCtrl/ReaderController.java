@@ -12,9 +12,15 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class ReaderController {
+    // just 2 states, use enum for state machine
+    public enum ReaderControllerState {
+        INITIALIZED, DESTROYED
+    }
+
     private static ReaderController instance;
     private ImpinjReader mReader;
     private Timer mTimer;
+    public static ReaderControllerState state;
 
     public static synchronized ReaderController getInstance() {
         if (instance == null) {
@@ -24,6 +30,8 @@ public class ReaderController {
     }
     // Init command when executing this app
     public void initialize() {
+        destroy();
+
         // new Api instance
         Api api = Api.getInstance();
         api.buildHttpClient();
@@ -35,22 +43,34 @@ public class ReaderController {
         try {
             System.out.println("Connecting...");
             mReader.connect(PropertyUtils.getReaderHost());
-            instance.controlReader("STOP"); // Reader continues singulating event when JAVA app stops. resets reader at init.
             System.out.println("Connected to reader");
         } catch (OctaneSdkException e) {
             System.out.println("mReader.connect OctaneSdkException: " + e.getMessage());
         }
-        api.initSocketIOInterface(); // Socket.io reader control interface
-        instance.initTerminalInterface(); // Command-line reader control interface
+
+        // Socket.io reader control interface
+        api.initSocketIOInterface();
+
+        // setting initialized state, don't change order
+        state = ReaderControllerState.INITIALIZED;
+
+        // Reader continues singulating event when JAVA app stops. resets reader at init. MAKE SURE DO THIS AT LAST ORDER OF THIS FUNCTION.
+        controlReader("STOP");
     }
     public String controlReaderFromSocketIo (String input) {
         Gson gson = new Gson();
         SocketInput inputJson = gson.fromJson(input, SocketInput.class);
         String command = inputJson.getCommand();
-        return gson.toJson(instance.controlReader(command));
+        return gson.toJson(controlReader(command));
     }
     // control readers' start, stop
-    public ReaderStatus controlReader(String command) {
+    private ReaderStatus controlReader(String command) {
+        // recover from bad state
+        if (state != ReaderControllerState.INITIALIZED) {
+            initialize();
+            initTerminalInterface();
+        }
+
         ReaderStatus rs = new ReaderStatus();
         String message = "";
         Boolean hasError = false;
@@ -82,7 +102,7 @@ public class ReaderController {
                         mTimer.schedule(new TimerTask() {
                             @Override
                             public void run() {
-                                instance.controlReader("STOP");
+                                controlReader("STOP");
                                 System.out.println("Stopped");
                             }
                         }, 5000);
@@ -108,11 +128,11 @@ public class ReaderController {
         return rs;
     }
     // Commandline controls
-    private void initTerminalInterface() {
+    public void initTerminalInterface() {
         System.out.println("Commands: START || DEBUG || STOP || STATUS");
         Scanner s = new Scanner(System.in);
         while (s.hasNextLine()) {
-            ReaderStatus rs = instance.controlReader(s.nextLine());
+            ReaderStatus rs = controlReader(s.nextLine());
             Gson gson = new Gson();
             System.out.println(gson.toJson(rs));
         }
@@ -123,6 +143,11 @@ public class ReaderController {
             mTimer.purge();
             mTimer = null;
         }
+    }
+    private void destroy () {
+        resetTimer();
+        mReader = null;
+        state = ReaderControllerState.DESTROYED;
     }
     /*
     Search mode determines how reader change tags' state, or how frequent a tag is reported when in sensor field
