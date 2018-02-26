@@ -30,7 +30,12 @@ public class ReaderController {
     }
     // Init command when executing this app
     public void initialize() {
-        destroy();
+        if (state == ReaderControllerState.INITIALIZED) {
+            return;
+        } else {
+            // clean all
+            destroy();
+        }
 
         // new Api instance
         Api api = Api.getInstance();
@@ -65,7 +70,7 @@ public class ReaderController {
     }
     // control readers' start, stop
     private ReaderStatus controlReader(String command) {
-        // recover from bad state
+        // recover from bad state or initialized to continue tasks
         if (state != ReaderControllerState.INITIALIZED) {
             initialize();
             initTerminalInterface();
