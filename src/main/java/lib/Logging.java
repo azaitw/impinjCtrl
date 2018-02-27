@@ -15,11 +15,9 @@ import java.util.TimerTask;
 public class Logging {
     private static Logging instance;
 
-    private final long delay = 0;
-    private final long intervalPeriodMs = 1000;
+    private final long DELAY = 0;
+    private final long INTERVAL_PERIOD_MS = 1000;
 
-    private String mLogFileName;
-    private FileWriter mFileWriter;
     private BufferedWriter mBufferedWriter;
     private Gson mGson;
     private Api mApi;
@@ -65,15 +63,13 @@ public class Logging {
                 if (aggregateRecords == null || aggregateRecords.size() == 0) {
                     return;
                 }
-                TxData txData = new TxData();
 
-                for(int i=0; i<aggregateRecords.size(); i++) {
-                    if (aggregateRecords.get(i) != null) {
-                        txData.addRecord(aggregateRecords.get(i));
+                TxData txData = new TxData();
+                for (Record record : aggregateRecords) {
+                    if (record!= null) {
+                        txData.addRecord(record);
                     }
                 }
-
-
 
                 String output = mGson.toJson(txData);
 
@@ -93,22 +89,22 @@ public class Logging {
         interval = new Timer();
 
         // schedules the task to be run in an interval
-        interval.scheduleAtFixedRate(intervalTask, delay,
-                intervalPeriodMs);
+        interval.scheduleAtFixedRate(intervalTask, DELAY,
+                INTERVAL_PERIOD_MS);
 
-        mLogFileName = PropertyUtils.getLogPath() + PropertyUtils.getLogFileName();
+        String logFileName = PropertyUtils.getLogPath() + PropertyUtils.getLogFileName();
         mGson = new Gson();
         mApi = Api.getInstance();
         mDebugCounter = 0;
-        System.out.println("mLogFileName: " + mLogFileName);
+        System.out.println("mLogFileName: " + logFileName);
         try {
-            mFileWriter = new FileWriter(mLogFileName, true);
-            mBufferedWriter = new BufferedWriter(mFileWriter);
+            FileWriter fileWriter = new FileWriter(logFileName, true);
+            mBufferedWriter = new BufferedWriter(fileWriter);
             mBufferedWriter.write("[ ");
         } catch (Exception e) {
             System.out.println("Logging start Exception: " + e.getMessage());
         }
-        return mLogFileName;
+        return logFileName;
     }
     // Create log file and empty json array for a session
     public void stop() {
@@ -129,9 +125,9 @@ public class Logging {
 
     }
     public void addEntry(Record record) {
-        // TxData txData = new TxData();
-        // txData.addRecord(record);
-        /*
+        /* // keep for a while
+        TxData txData = new TxData();
+        txData.addRecord(record);
         String output = mGson.toJson(txData);
         mDebugCounter += 1;
         System.out.println(output);
@@ -140,8 +136,8 @@ public class Logging {
         } catch (Exception e) {
             System.out.println("addEntry write file Exception: " + e.getMessage());
         }
+        mApi.sendResult(output);
         */
-        // mApi.sendResult(output);
         aggregateRecords.add(record);
     }
 
