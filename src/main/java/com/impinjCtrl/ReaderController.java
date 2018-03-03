@@ -137,7 +137,9 @@ public class ReaderController {
         System.out.println("Commands: START || DEBUG || STOP || STATUS");
         Scanner s = new Scanner(System.in);
         while (s.hasNextLine()) {
-            ReaderStatus rs = controlReader(s.nextLine());
+            String nextLine = s.nextLine();
+            if (nextLine == null || nextLine.length() == 0) { return; }
+            ReaderStatus rs = controlReader(nextLine);
             Gson gson = new Gson();
             System.out.println(gson.toJson(rs));
         }
